@@ -1,0 +1,127 @@
+{
+  "plugins": [
+    "vue",
+    "vitest",
+    "promise",
+    "unicorn",
+    "typescript"
+  ],
+  "categories": {},
+  "rules": {
+    // === ESTILO Y FORMATO ===
+    "semi": ["error", "never"],
+    "quotes": ["error", "single"],
+    "indent": ["error", 2],
+    "comma-dangle": ["error", "always-multiline"],
+    "object-curly-spacing": ["error", "always"],
+    "array-bracket-spacing": ["error", "never"],
+
+    // === MEJORES PRÁCTICAS JAVASCRIPT ===
+    "no-var": "error",
+    "prefer-const": "error",
+    "no-unused-vars": "error",
+    "no-console": "warn",
+    "eqeqeq": "error",
+    "curly": "error",
+    "no-debugger": "error",
+    "prefer-template": "error",
+
+    // === SEGURIDAD Y CORRECCIÓN ===
+    "no-eval": "error",
+    "no-alert": "error",
+    "use-isnan": "error",
+    "valid-typeof": "error",
+    "no-constant-condition": "error",
+    "no-unreachable": "error",
+
+    // === TYPESCRIPT ===
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/prefer-as-const": "error",
+    "@typescript-eslint/no-array-constructor": "error",
+    "@typescript-eslint/prefer-for-of": "error",
+    "@typescript-eslint/prefer-includes": "error",
+    "@typescript-eslint/prefer-nullish-coalescing": "error",
+    "@typescript-eslint/prefer-optional-chain": "error",
+
+    // === VUE ===
+    "vue/multi-word-component-names": "off",
+    "vue/no-unused-vars": "error",
+    "vue/require-v-for-key": "error",
+    "vue/no-use-v-if-with-v-for": "error",
+    "vue/valid-v-bind": "error",
+    "vue/valid-v-for": "error",
+    "vue/valid-v-if": "error",
+    "vue/valid-v-model": "error",
+    "vue/valid-v-on": "error",
+
+    // === MODERN JAVASCRIPT ===
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/prefer-array-some": "error",
+    "unicorn/prefer-at": "error",
+    "unicorn/prefer-includes": "error",
+    "unicorn/prefer-modern-dom-apis": "error",
+    "unicorn/prefer-optional-catch-binding": "error",
+    "unicorn/prefer-set-has": "error",
+    "unicorn/prefer-string-starts-ends-with": "error",
+    "unicorn/no-empty-file": "error",
+    "unicorn/no-unnecessary-await": "error",
+    "unicorn/no-useless-spread": "error",
+
+    // === PROMISES ===
+    "promise/prefer-await-to-then": "error",
+    "promise/no-return-wrap": "error",
+    "promise/always-return": "error",
+
+    // === IMPORTS ===
+    "import/no-unresolved": "error",
+    "import/no-cycle": "error",
+    "import/first": "error",
+    "import/no-duplicates": "error",
+    "import/order": ["error", {"groups": ["builtin", "external", "internal", "parent", "sibling", "index"]}],
+
+    // === ACCESIBILIDAD ===
+    "jsx-a11y/alt-text": "error",
+    "jsx-a11y/anchor-has-content": "error",
+    "jsx-a11y/heading-has-content": "error",
+    "jsx-a11y/label-has-associated-control": "error",
+
+    // === TESTING ===
+    "vitest/no-disabled-tests": "error",
+    "vitest/no-focused-tests": "error",
+    "vitest/valid-expect": "error",
+    "vitest/prefer-to-be": "error",
+    "vitest/prefer-to-contain": "error",
+    "vitest/prefer-to-have-length": "error"
+  },
+  "options": {
+    "reportUnusedDisableDirectives": "warn",
+    "typeAware": false,
+    "typeCheck": true,
+  },
+  "settings": {
+    "jsx-a11y": {
+      "polymorphicPropName": null,
+      "components": {},
+      "attributes": {}
+    },
+    "jsdoc": {
+      "ignorePrivate": false,
+      "ignoreInternal": false,
+      "ignoreReplacesDocs": true,
+      "overrideReplacesDocs": true,
+      "augmentsExtendsReplacesDocs": false,
+      "implementsReplacesDocs": false,
+      "exemptDestructuredRootsFromChecks": false,
+      "tagNamePreference": {}
+    },
+    "vitest": {
+      "typecheck": false
+    }
+  },
+  "env": {
+    "builtin": true
+  },
+  "globals": {},
+  "ignorePatterns": []
+}
