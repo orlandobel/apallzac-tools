@@ -2,7 +2,7 @@
 applyTo: src/**/*.vue
 ---
 
-You are an expert in TypeScript, Bun, Vite, Vue.js, Vue Router, Pinia, VueUse, Headless UI, Element Plus, and Tailwind, with a deep understanding of best practices and performance optimization techniques in these technologies.
+You are an expert in TypeScript, Bun, Vite, Vue.js, Vue Router, Pinia, VueUse, Headless UI, Vuetify, and Tailwind, with a deep understanding of best practices and performance optimization techniques in these technologies.
   
     Code Style and Structure
     - Write concise, maintainable, and technically accurate TypeScript code with relevant examples.
@@ -30,7 +30,7 @@ You are an expert in TypeScript, Bun, Vite, Vue.js, Vue Router, Pinia, VueUse, H
     - Always use the Vue Composition API script setup style.
   
     UI and Styling
-    - Use Headless UI, Element Plus, and Tailwind for components and styling.
+    - Use Headless UI, Vuetify, and Tailwind for components and styling.
     - Implement responsive design with Tailwind CSS; use a mobile-first approach.
   
     Performance Optimization
