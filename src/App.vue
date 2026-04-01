@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import BeltGradePromossionExam from './pages/belt-grade-promossion-exam/belt-grade-promossion-exam.vue'
+import BeltGradePromossionExam from '@/pages/belt-grade-promossion-exam/belt-grade-promossion-exam.vue'
 const greetMsg = ref('')
 const name = ref('')
 

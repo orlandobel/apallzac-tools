@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+// import path from "path"; // No necesario con URL
 
-// @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
@@ -9,8 +9,8 @@ export default defineConfig(async () => ({
   plugins: [vue()],
   resolve: {
     alias: {
-      // @ts-expect-error import.meta.dir is available in Bun
-      "@": `${import.meta.dir}/src`,
+      // Alias compatible con Bun y Vite
+      "@": new URL("./src", import.meta.url).pathname,
     },
   },
 

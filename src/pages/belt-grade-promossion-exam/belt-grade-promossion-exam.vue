@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LoadedDataTable from '@/components/loaded-data-table/loaded-data-table.vue';
 
 type TabKey = 'datos' | 'previsualizacion'
 const activeTab = ref<TabKey>('datos')
@@ -16,15 +17,15 @@ const activeTab = ref<TabKey>('datos')
 
 			<v-divider />
 
-			<v-tabs-items v-model="activeTab">
-				<v-tab-item value="datos">
-					TODO:: table with loaded dat
-				</v-tab-item>
+			<v-tabs-window class="p-1" v-model="activeTab">
+				<v-tabs-window-item value="datos">
+					<loaded-data-table />
+				</v-tabs-window-item>
 
-				<v-tab-item value="previsualizacion">
-					PDF preview
-				</v-tab-item>
-			</v-tabs-items>
+				<v-tabs-window-item value="previsualizacion">
+					TODO::PDF preview
+				</v-tabs-window-item>
+			</v-tabs-window>
 		</main>
 
 		<aside>
@@ -35,7 +36,7 @@ const activeTab = ref<TabKey>('datos')
 
 <style scoped>
 aside {
-	width: 400px;
+	width: 300px;
 	border-left: 1px solid #636161;
 }
 </style>
