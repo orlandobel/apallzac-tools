@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import LoadedDataTable from '@/components/loaded-data-table/loaded-data-table.vue';
+import previewer from '@/components/previewer/previewer.vue';
 
 type TabKey = 'datos' | 'previsualizacion'
 const activeTab = ref<TabKey>('datos')
@@ -40,7 +41,7 @@ const data = [
 </script>
 
 <template>
-	<div class="flex h-screen">
+	<div class="flex h-screen overflow-hidden">
 		<main class="p0 flex-1">
 			<v-tabs v-model="activeTab" background-color="grey.lighten4" grow>
 				<v-tab value="datos">Datos</v-tab>
@@ -54,8 +55,8 @@ const data = [
 					<loaded-data-table :headers="headers" :data="data" />
 				</v-tabs-window-item>
 
-				<v-tabs-window-item value="previsualizacion">
-					TODO::PDF preview
+				<v-tabs-window-item class="h-full max-h-screen" value="previsualizacion">
+					<previewer />
 				</v-tabs-window-item>
 			</v-tabs-window>
 		</main>
