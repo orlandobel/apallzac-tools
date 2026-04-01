@@ -5,6 +5,38 @@ import LoadedDataTable from '@/components/loaded-data-table/loaded-data-table.vu
 type TabKey = 'datos' | 'previsualizacion'
 const activeTab = ref<TabKey>('datos')
 
+const headers = [
+	'Escuela',
+	'Profesor',
+	'Alumno',
+	'Grado',
+	'Talla',
+]
+
+const data = [
+	{
+		'Escuela': 'Escuela 1',
+		'Profesor': 'Profesor 1',
+		'Alumno': 'Alumno 1',
+		'Grado': 'Grado 1',
+		'Talla': 'Talla 1'
+	},
+	{
+		'Escuela': 'Escuela 2',
+		'Profesor': 'Profesor 2',
+		'Alumno': 'Alumno 2',
+		'Grado': 'Grado 2',
+		'Talla': 'Talla 2'
+	},
+	{
+		'Escuela': 'Escuela 3',
+		'Profesor': 'Profesor 3',
+		'Alumno': 'Alumno 3',
+		'Grado': 'Grado 3',
+		'Talla': 'Talla 3'
+	}
+]
+
 </script>
 
 <template>
@@ -17,9 +49,9 @@ const activeTab = ref<TabKey>('datos')
 
 			<v-divider />
 
-			<v-tabs-window class="p-1" v-model="activeTab">
-				<v-tabs-window-item value="datos">
-					<loaded-data-table />
+			<v-tabs-window v-model="activeTab">
+				<v-tabs-window-item class="px-1" value="datos">
+					<loaded-data-table :headers="headers" :data="data" />
 				</v-tabs-window-item>
 
 				<v-tabs-window-item value="previsualizacion">
