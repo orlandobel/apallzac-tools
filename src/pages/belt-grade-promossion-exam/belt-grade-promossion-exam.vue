@@ -42,23 +42,26 @@ const data = [
 
 <template>
 	<div class="flex h-screen overflow-hidden">
-		<main class="p0 flex-1">
-			<v-tabs v-model="activeTab" background-color="grey.lighten4" grow>
-				<v-tab value="datos">Datos</v-tab>
-				<v-tab value="previsualizacion">Previsualización</v-tab>
-			</v-tabs>
+		<main class="p0 flex-1 flex flex-col h-full">
+			<div class="shrink-0 w-full">
+				<v-tabs v-model="activeTab" background-color="grey.lighten4" grow>
+					<v-tab value="datos">Datos</v-tab>
+					<v-tab value="previsualizacion">Previsualización</v-tab>
+				</v-tabs>
+			</div>
 
-			<v-divider />
 
-			<v-tabs-window v-model="activeTab">
-				<v-tabs-window-item class="px-1" value="datos">
-					<loaded-data-table :headers="headers" :data="data" />
-				</v-tabs-window-item>
-
-				<v-tabs-window-item class="h-full max-h-screen" value="previsualizacion">
-					<previewer />
-				</v-tabs-window-item>
-			</v-tabs-window>
+			<div class="flex-1 flex overflow-hidden min-h-0 w-full">
+				<v-tabs-window class="h-full w-full overflow-auto" v-model="activeTab">
+					<v-tabs-window-item class="px-1" value="datos">
+						<loaded-data-table :headers="headers" :data="data" />
+					</v-tabs-window-item>
+	
+					<v-tabs-window-item class="pt-4" value="previsualizacion">
+						<previewer />
+					</v-tabs-window-item>
+				</v-tabs-window>
+			</div>
 		</main>
 
 		<aside>

@@ -24,7 +24,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <section class="flex flex-col items-center justify-center overflow-auto w-full h-full">
+  <section class="flex flex-col items-center justify-center">
     <canvas ref="canvasRef" class="border shadow max-w-full h-auto w-auto block" />
   </section>
 </template>
