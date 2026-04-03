@@ -43,36 +43,51 @@ const data = [
 <template>
 	<div class="flex h-screen overflow-hidden">
 		<main class="p0 flex-1 flex flex-col h-full">
-			<div class="shrink-0 w-full">
+			<div class="shrink-0 w-full flex">
 				<v-tabs v-model="activeTab" background-color="grey.lighten4" grow>
 					<v-tab value="datos">Datos</v-tab>
 					<v-tab value="previsualizacion">Previsualización</v-tab>
 				</v-tabs>
+
+				<div class="flex items-center justify-center w-xs mx-4 px-4 border-l-1 border-l-gray-500">
+					<label for="file"
+						class="block w-full rounded-lg border-none 
+						bg-accent px-3 py-2 text-center text-white cursor-pointer">
+						Elegir archivo
+					</label>
+
+					<input type="file" name="file"id="file"
+						class="sr-only"
+						accept="xls, xlsx, ods, gsheet"/>
+				</div>
 			</div>
 
 
 			<div class="flex-1 flex overflow-hidden min-h-0 w-full">
-				<v-tabs-window class="h-full w-full overflow-auto" v-model="activeTab">
+				<v-tabs-window class="h-full w-full pt-4 overflow-auto" v-model="activeTab">
 					<v-tabs-window-item class="px-1" value="datos">
 						<loaded-data-table :headers="headers" :data="data" />
 					</v-tabs-window-item>
 	
-					<v-tabs-window-item class="pt-4" value="previsualizacion">
+					<v-tabs-window-item value="previsualizacion">
 						<previewer />
 					</v-tabs-window-item>
 				</v-tabs-window>
 			</div>
 		</main>
-
-		<aside>
-
-		</aside>
 	</div>
 </template>
 
 <style scoped>
-aside {
-	width: 300px;
-	border-left: 1px solid #636161;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>
