@@ -1,12 +1,18 @@
 import 'vuetify/styles'
+import '@mdi/font/css/materialdesignicons.css'
+
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import { aliases, mdi } from 'vuetify/iconsets/mdi-svg'
 import { theme } from '../theme/dark'
 
 const vuetify = createVuetify({
   components,
   directives,
+  icons: {
+    defaultSet: 'mdi'
+  },
   theme: {
     themes: {
       light: {
@@ -26,7 +32,6 @@ const vuetify = createVuetify({
     VBtn: {
       color: 'primary',
       rounded: 'lg',
-      elevation: 2,
     },
     VTextField: {
       variant: 'outlined',

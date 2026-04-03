@@ -64,12 +64,12 @@ const data = [
 
 
 			<div class="flex-1 flex overflow-hidden min-h-0 w-full">
-				<v-tabs-window class="h-full w-full pt-4 overflow-auto" v-model="activeTab">
+				<v-tabs-window class="h-full w-full overflow-auto" v-model="activeTab">
 					<v-tabs-window-item class="px-1" value="datos">
 						<loaded-data-table :headers="headers" :data="data" />
 					</v-tabs-window-item>
 	
-					<v-tabs-window-item value="previsualizacion">
+					<v-tabs-window-item value="previsualizacion" class="relative">
 						<previewer />
 					</v-tabs-window-item>
 				</v-tabs-window>
