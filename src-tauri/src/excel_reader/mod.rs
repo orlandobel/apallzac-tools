@@ -39,40 +39,10 @@ mod tests {
 
     #[test]
     fn test_create_and_read_workbook_from_public() {
-        // Construir la ruta al archivo Excel en public/tests
-        // CARGO_MANIFEST_DIR es: C:\Users\orlan\Desktop\apallzac-tools\src-tauri
-        // Necesitamos ir a: C:\Users\orlan\Desktop\apallzac-tools\public\tests\examen ejemplo 1.xlsx
+        let path_str = get_file_path("examen ejemplo 1.xlsx");
         
-        let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        println!("CARGO_MANIFEST_DIR: {}", manifest_dir);
-        
-        // Construir ruta base usando parent()
-        let mut base_path = PathBuf::from(manifest_dir);
-        base_path.pop(); // Salir de src-tauri
-        base_path.pop(); // Salir del nombre del proyecto
-        
-        // En realidad, solo necesitamos salir un nivel, ya que estamos en src-tauri
-        let mut full_path = PathBuf::from(manifest_dir);
-        full_path.push("..");
-        full_path.push("public");
-        full_path.push("tests");
-        full_path.push("examen ejemplo 1.xlsx");
-
-        let path_str = full_path
-            .to_str()
-            .expect("No se pudo convertir la ruta a string");
-
-        println!("Intentando abrir archivo en: {}", path_str);
-
-        // Verificar que el archivo existe
-        assert!(
-            std::path::Path::new(path_str).exists(),
-            "El archivo no existe en la ruta: {}",
-            path_str
-        );
-
         // Crear el workbook y leer el Excel
-        let workbook = Workbook::new(path_str.to_string()).expect("No se pudo crear Workbook");
+        let workbook = Workbook::new(path_str.clone()).expect("No se pudo crear Workbook");
 
         // Verificar que el workbook se creó correctamente
         assert_eq!(workbook.path, path_str);
@@ -82,40 +52,10 @@ mod tests {
 
     #[test]
     fn test_get_column_config() {
-        // Construir la ruta al archivo Excel en public/tests
-        // CARGO_MANIFEST_DIR es: C:\Users\orlan\Desktop\apallzac-tools\src-tauri
-        // Necesitamos ir a: C:\Users\orlan\Desktop\apallzac-tools\public\tests\examen ejemplo 1.xlsx
+        let path_str = get_file_path("examen ejemplo 1.xlsx");
         
-        let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        println!("CARGO_MANIFEST_DIR: {}", manifest_dir);
-        
-        // Construir ruta base usando parent()
-        let mut base_path = PathBuf::from(manifest_dir);
-        base_path.pop(); // Salir de src-tauri
-        base_path.pop(); // Salir del nombre del proyecto
-        
-        // En realidad, solo necesitamos salir un nivel, ya que estamos en src-tauri
-        let mut full_path = PathBuf::from(manifest_dir);
-        full_path.push("..");
-        full_path.push("public");
-        full_path.push("tests");
-        full_path.push("examen ejemplo 1.xlsx");
-
-        let path_str = full_path
-            .to_str()
-            .expect("No se pudo convertir la ruta a string");
-
-        println!("Intentando abrir archivo en: {}", path_str);
-
-        // Verificar que el archivo existe
-        assert!(
-            std::path::Path::new(path_str).exists(),
-            "El archivo no existe en la ruta: {}",
-            path_str
-        );
-
         // Crear el workbook y leer el Excel
-        let mut workbook = Workbook::new(path_str.to_string()).expect("No se pudo crear Workbook");
+        let mut workbook = Workbook::new(path_str).expect("No se pudo crear Workbook");
 
         let mut sheet = workbook.get_sheet().expect("No se pudo obtener la hoja");
         let row = sheet.next().unwrap().expect("No se pudo obtener la fila");
@@ -127,5 +67,35 @@ mod tests {
         println!("✓ Test exitoso: Configuración de columnas obtenida correctamente");
     }
 
+
+    /* This function is intended to get the file path for the test Excel file, is not a test it self */
+    fn get_file_path(file_name: &str) -> String {
+        // Build path to Excel located on public/tests
+        // CARGO_MANIFEST_DIR es: $HOME\apallzac-tools\src-tauri
+        
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        println!("CARGO_MANIFEST_DIR: {}", manifest_dir);
+                
+        let mut full_path = PathBuf::from(manifest_dir);
+        full_path.push("..");
+        full_path.push("public");
+        full_path.push("tests");
+        full_path.push(file_name);
+
+        let path_str = full_path
+            .to_str()
+            .expect("No se pudo convertir la ruta a string");
+
+        println!("Intentando abrir archivo en: {}", path_str);
+
+        // Verificar que el archivo existe
+        assert!(
+            std::path::Path::new(path_str).exists(),
+            "El archivo no existe en la ruta: {}",
+            path_str
+        );
+
+        path_str.to_string()
+    }
 }
 
