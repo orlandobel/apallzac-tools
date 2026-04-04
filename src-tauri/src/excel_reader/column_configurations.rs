@@ -1,5 +1,6 @@
 use unicode_normalization::UnicodeNormalization;
 
+#[allow(dead_code)]
 pub enum Configurations {
     BeltPromotionConfiguration(BeltPromotionConfiguration)
 }
