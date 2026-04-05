@@ -2,7 +2,7 @@ use unicode_normalization::UnicodeNormalization;
 
 #[allow(dead_code)]
 pub enum Configurations {
-    BeltPromotionConfiguration(BeltPromotionConfiguration)
+    BeltPromotionConfiguration(BeltPromotionConfiguration),
 }
 
 trait SheetConfig {
@@ -43,13 +43,15 @@ impl BeltPromotionConfiguration {
                 "CINTURON" => belt_promotion_configuration.belt = index as isize,
                 "TALLA" => belt_promotion_configuration.belt_size = index as isize,
                 _ => {}
-
             }
         }
 
-        let missing  = belt_promotion_configuration.check_for_errors();
+        let missing = belt_promotion_configuration.check_for_errors();
         if !missing.is_empty() {
-            let msg = format!("No se encontraron las siguientes columnas: {:?}", missing.join(", "));
+            let msg = format!(
+                "No se encontraron las siguientes columnas: {:?}",
+                missing.join(", ")
+            );
             return Err(msg);
         }
 
@@ -76,5 +78,4 @@ impl SheetConfig for BeltPromotionConfiguration {
 
         missing_columns
     }
-
 }

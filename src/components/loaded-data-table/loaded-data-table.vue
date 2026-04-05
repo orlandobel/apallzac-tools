@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import Candidate from '@/types/Candidate.type';
+
 defineProps<{
     headers: string[]
-    data: any[]
+    data: Candidate[]
 }>()
 </script>
 
@@ -16,9 +18,21 @@ defineProps<{
         </thead>
 
         <tbody>
-            <tr v-for="row in data" :key="row">
-                <td class="border border-gray-400 px-2 py-1" v-for="value in row" :key="value">
-                    {{ value }}
+            <tr v-for="(row, index) in data" :key="index">
+                <td class="border border-gray-400 px-2 py-1">
+                    {{ row.school }}
+                </td>
+                <td class="border border-gray-400 px-2 py-1">
+                    {{ row.trainer }}
+                </td>
+                <td class="border border-gray-400 px-2 py-1">
+                    {{ row.name }}
+                </td>
+                <td class="border border-gray-400 px-2 py-1">
+                    {{ row.belt }}
+                </td>
+                <td class="border border-gray-400 px-2 py-1">
+                    {{ row.belt_size }}
                 </td>
             </tr>
         </tbody>

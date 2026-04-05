@@ -1,5 +1,5 @@
-use crate::{excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook}};
 use super::candidate::Candidate;
+use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook};
 
 pub struct BeltPromotionExamController {
     workbook: Workbook,
@@ -15,13 +15,16 @@ impl BeltPromotionExamController {
         let col_config = BeltPromotionConfiguration::new(&first_row)?;
         drop(sheet);
 
-        Ok(BeltPromotionExamController { workbook, col_config })
+        Ok(BeltPromotionExamController {
+            workbook,
+            col_config,
+        })
     }
 
     pub fn load_data(&mut self) -> Result<Vec<Candidate>, Box<dyn std::error::Error>> {
         let mut candidates: Vec<Candidate> = Vec::new();
         let sheet = self.workbook.get_sheet()?;
-        
+
         for row in sheet.skip(1) {
             let data = row?;
             let candidate = Candidate::new(&self.col_config, &data)?;
@@ -48,23 +51,22 @@ mod tests {
     fn test_load_data() {
         let file_path = get_file_path("examen ejemplo 1.xlsx");
         let mut controller = BeltPromotionExamController::new(&file_path).unwrap();
-        
+
         let result = controller.load_data();
         assert!(result.is_ok());
-        
+
         let candidates = result.unwrap();
         assert!(!candidates.is_empty());
     }
-
 
     /* This function is intended to get the file path for the test Excel file, is not a test it self */
     fn get_file_path(file_name: &str) -> String {
         // Build path to Excel located on public/tests
         // CARGO_MANIFEST_DIR es: $HOME\apallzac-tools\src-tauri
-        
+
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         println!("CARGO_MANIFEST_DIR: {}", manifest_dir);
-                
+
         let mut full_path = PathBuf::from(manifest_dir);
         full_path.push("..");
         full_path.push("public");

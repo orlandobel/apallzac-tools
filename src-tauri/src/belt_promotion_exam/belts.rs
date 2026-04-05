@@ -1,6 +1,5 @@
-
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use serde::{Serialize, Deserialize};
 
 use unicode_normalization::UnicodeNormalization;
 
@@ -14,7 +13,7 @@ pub enum BELTS {
     CAFE,
     CAFE1,
     CAFE2,
-    CAFE3
+    CAFE3,
 }
 
 impl FromStr for BELTS {
@@ -26,7 +25,7 @@ impl FromStr for BELTS {
 
         println!("Normalized and uppercased input: {}", upper);
         match upper.as_str() {
-            "AMARILLO"  => Ok(BELTS::AMARILLO),
+            "AMARILLO" => Ok(BELTS::AMARILLO),
             "NARANJA" => Ok(BELTS::NARANJA),
             "MORADO" => Ok(BELTS::MORADO),
             "AZUL" => Ok(BELTS::AZUL),
@@ -36,10 +35,10 @@ impl FromStr for BELTS {
             "CAFE1" => Ok(BELTS::CAFE1),
             "CAFE2" => Ok(BELTS::CAFE2),
             "CAFE3" => Ok(BELTS::CAFE3),
-            _      => {
+            _ => {
                 let msg = format!("No se encontro cinturon: {}", input);
                 Err(msg)
-            },
+            }
         }
     }
 }

@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { open } from '@tauri-apps/plugin-dialog';
+import { invoke } from '@tauri-apps/api/core';
 import LoadedDataTable from '@/components/loaded-data-table/loaded-data-table.vue';
 import previewer from '@/components/previewer/previewer.vue';
+import Candidate from '@/types/Candidate.type';
 
 type TabKey = 'datos' | 'previsualizacion'
 const activeTab = ref<TabKey>('datos')
@@ -14,29 +17,22 @@ const headers = [
 	'Talla',
 ]
 
-const data = [
-	{
-		'Escuela': 'Escuela 1',
-		'Profesor': 'Profesor 1',
-		'Alumno': 'Alumno 1',
-		'Grado': 'Grado 1',
-		'Talla': 'Talla 1'
-	},
-	{
-		'Escuela': 'Escuela 2',
-		'Profesor': 'Profesor 2',
-		'Alumno': 'Alumno 2',
-		'Grado': 'Grado 2',
-		'Talla': 'Talla 2'
-	},
-	{
-		'Escuela': 'Escuela 3',
-		'Profesor': 'Profesor 3',
-		'Alumno': 'Alumno 3',
-		'Grado': 'Grado 3',
-		'Talla': 'Talla 3'
-	}
-]
+const data = ref<Candidate[]>([])
+
+const open_file = async (event: Event) => {
+	event.preventDefault()
+
+	const path = await open({
+		multiple: false,
+		filters: [{
+			name: "Hojas de cálculo",
+			extensions: ['xls', 'xlsx', 'ods', 'gsheet']
+		}]
+	})
+
+	data.value = await invoke('load_data_of_file', { path })
+	console.log(data)
+}
 
 </script>
 
@@ -58,7 +54,9 @@ const data = [
 
 					<input type="file" name="file"id="file"
 						class="sr-only"
-						accept="xls, xlsx, ods, gsheet"/>
+						accept="xls, xlsx, ods, gsheet"
+						@click="open_file"
+						/>
 				</div>
 			</div>
 
