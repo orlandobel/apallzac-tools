@@ -10,11 +10,11 @@ trait SheetConfig {
 }
 
 pub struct BeltPromotionConfiguration {
-    pub school: i32,
-    pub trainer: i32,
-    pub name: i32,
-    pub belt: i32,
-    pub belt_size: i32,
+    pub school: isize,
+    pub trainer: isize,
+    pub name: isize,
+    pub belt: isize,
+    pub belt_size: isize,
 }
 
 impl BeltPromotionConfiguration {
@@ -37,11 +37,11 @@ impl BeltPromotionConfiguration {
             let cell_upper = cell_name.to_uppercase();
 
             match cell_upper.as_str() {
-                "ESCUELA" => belt_promotion_configuration.school = index as i32,
-                "PROFESOR" => belt_promotion_configuration.trainer = index as i32,
-                "NOMBRE" => belt_promotion_configuration.name = index as i32,
-                "CINTURON" => belt_promotion_configuration.belt = index as i32,
-                "TALLA" => belt_promotion_configuration.belt_size = index as i32,
+                "ESCUELA" => belt_promotion_configuration.school = index as isize,
+                "PROFESOR" => belt_promotion_configuration.trainer = index as isize,
+                "NOMBRE" => belt_promotion_configuration.name = index as isize,
+                "CINTURON" => belt_promotion_configuration.belt = index as isize,
+                "TALLA" => belt_promotion_configuration.belt_size = index as isize,
                 _ => {}
 
             }
