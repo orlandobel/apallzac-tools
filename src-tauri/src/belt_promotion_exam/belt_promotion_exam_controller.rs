@@ -1,4 +1,4 @@
-use crate::excel_reader::{workbook::Workbook, column_configurations::BeltPromotionConfiguration};
+use crate::{excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook}};
 use super::candidate::Candidate;
 struct BeltPromotionExamController {
     workbook: Workbook,
@@ -23,7 +23,7 @@ impl BeltPromotionExamController {
         
         for row in sheet.skip(1) {
             let data = row?;
-            let candidate = Candidate::new(&self.col_config, &data);
+            let candidate = Candidate::new(&self.col_config, &data)?;
             candidates.push(candidate);
         }
 
