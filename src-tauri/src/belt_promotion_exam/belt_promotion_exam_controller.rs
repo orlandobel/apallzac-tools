@@ -1,6 +1,7 @@
 use crate::{excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook}};
 use super::candidate::Candidate;
-struct BeltPromotionExamController {
+
+pub struct BeltPromotionExamController {
     workbook: Workbook,
     col_config: BeltPromotionConfiguration,
 }

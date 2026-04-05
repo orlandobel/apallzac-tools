@@ -1,9 +1,10 @@
 
 use std::str::FromStr;
+use serde::{Serialize, Deserialize};
 
 use unicode_normalization::UnicodeNormalization;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum BELTS {
     AMARILLO,
     NARANJA,

@@ -1,10 +1,11 @@
 use std::str::FromStr;
 
 use excelstream::Row;
+use serde::{Deserialize, Serialize};
 use super::belts::BELTS;
 use crate::excel_reader::column_configurations::BeltPromotionConfiguration;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Candidate {
     school: Option<String>,
     name: String,
