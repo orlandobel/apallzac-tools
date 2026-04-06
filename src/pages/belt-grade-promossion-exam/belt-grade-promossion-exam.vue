@@ -37,9 +37,9 @@ const open_file = async (event: Event) => {
 </script>
 
 <template>
-	<div class="flex h-screen overflow-hidden">
-		<main class="p0 flex-1 flex flex-col h-full">
-			<div class="shrink-0 w-full flex">
+	<main class="flex h-screen overflow-hidden">
+		<div class="p0 flex-1 flex flex-col h-full">
+			<section class="shrink-0 w-full flex">
 				<v-tabs v-model="activeTab" background-color="grey.lighten4" grow>
 					<v-tab value="datos">Datos</v-tab>
 					<v-tab value="previsualizacion">Previsualización</v-tab>
@@ -58,10 +58,10 @@ const open_file = async (event: Event) => {
 						@click="open_file"
 						/>
 				</div>
-			</div>
+			</section>
 
 
-			<div class="flex-1 flex overflow-hidden min-h-0 w-full">
+			<section class="flex-1 flex overflow-hidden min-h-0 w-full">
 				<v-tabs-window class="h-full w-full overflow-auto" v-model="activeTab">
 					<v-tabs-window-item class="px-1" value="datos">
 						<loaded-data-table :headers="headers" :data="data" />
@@ -71,9 +71,9 @@ const open_file = async (event: Event) => {
 						<previewer />
 					</v-tabs-window-item>
 				</v-tabs-window>
-			</div>
-		</main>
-	</div>
+			</section>
+		</div>
+	</main>
 </template>
 
 <style scoped>
