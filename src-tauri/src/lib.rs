@@ -5,6 +5,7 @@ use app_state::AppState;
 mod belt_promotion_exam;
 mod excel_reader;
 mod app_state;
+mod exam_controller;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

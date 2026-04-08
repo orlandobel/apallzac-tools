@@ -1,4 +1,5 @@
 use super::candidate::Candidate;
+use crate::exam_controller::ExamController;
 use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook};
 
 pub struct BeltPromotionExamController {

@@ -5,13 +5,13 @@ use crate::excel_reader::column_configurations::BeltPromotionConfiguration;
 use excelstream::Row;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Candidate {
-    school: Option<String>,
-    name: String,
-    trainer: String,
-    belt: BELTS,
-    belt_size: String,
+    pub school: Option<String>,
+    pub name: String,
+    pub trainer: String,
+    pub belt: BELTS,
+    pub belt_size: String,
 }
 
 impl Candidate {
