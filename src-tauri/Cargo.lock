@@ -72,6 +72,7 @@ name = "apallzac-tools"
 version = "0.1.0"
 dependencies = [
  "acroform",
+ "base64 0.22.1",
  "excelstream",
  "lopdf 0.40.0",
  "serde",
