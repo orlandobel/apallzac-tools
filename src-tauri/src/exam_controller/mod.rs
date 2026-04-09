@@ -49,7 +49,7 @@ impl ExamController {
             Box::new(e) as Box<dyn std::error::Error + 'static>
         })?;
 
-        self.flatten_document(&output_path)
+        self.flatten_document(&output_path, &candidate.belt)
         .map_err(|e| {
             println!("Error flattening document: {:?}", e.to_string());
             Box::new(e)
@@ -58,7 +58,7 @@ impl ExamController {
         Ok(())
     }
 
-    fn flatten_document(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    fn flatten_document(&self, path: &str, belt: &BELTS) -> Result<(), Box<dyn std::error::Error>> {
         let mut document = Document::load(path)?;
 
         // --- Fase 1: recolectar datos (préstamos inmutables) ---
@@ -204,11 +204,7 @@ impl ExamController {
                 }
             };
 
-            let (font_name, mut font_size) = da_bytes
-                .as_deref()
-                .map(Self::set_font_conf)
-                .or_else(|| form_da.as_deref().map(Self::set_font_conf))
-                .unwrap_or_else(|| (b"Helv".to_vec(), 10.0f32));
+            let (font_name, mut font_size) = Self::set_font_conf(belt);
             if font_size == 0.0 {
                 font_size = 10.0;
             }
@@ -292,9 +288,20 @@ impl ExamController {
         res_dict.set(b"Font", Object::Dictionary(font_dict));
     }
 
-    fn set_font_conf(da: &[u8]) -> (Vec<u8>, f32) {        
+    fn set_font_conf(belt: &BELTS) -> (Vec<u8>, f32) {        
         let font_name = b"Calibri".to_vec();
-        let font_size = 11.0f32;
+        
+        let font_size = match belt {
+            BELTS::AMARILLO => { 11.0f32 },
+            BELTS::NARANJA => { 11.0f32 },
+            BELTS::MORADO => { 11.0f32 },
+            BELTS::AZUL => { 11.0f32 },
+            BELTS::VERDE => { 9.0f32 },
+            BELTS::CAFE => { 8.5f32 },
+            BELTS::CAFE1 => { 8.5f32 },
+            BELTS::CAFE2 => { 8.5f32 },
+            BELTS::CAFE3 => { 8.5f32 }
+        };
         
         (font_name, font_size)
     }
@@ -329,11 +336,11 @@ mod exam_controller_test {
             school: Some("Some School".to_string()),
             name: "John Doe".to_string(),
             trainer: "Jane Smith".to_string(),
-            belt: BELTS::AMARILLO,
+            belt: BELTS::CAFE1,
             belt_size: "CH".to_string()
         };
 
-        let result = controller.create_sheet(&candidate, "yellow.pdf");
+        let result = controller.create_sheet(&candidate, "brown3.pdf");
         assert!(result.is_ok());
 
         result.unwrap();
