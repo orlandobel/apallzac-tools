@@ -206,8 +206,8 @@ impl ExamController {
 
             let (font_name, mut font_size) = da_bytes
                 .as_deref()
-                .map(Self::parse_da)
-                .or_else(|| form_da.as_deref().map(Self::parse_da))
+                .map(Self::set_font_conf)
+                .or_else(|| form_da.as_deref().map(Self::set_font_conf))
                 .unwrap_or_else(|| (b"Helv".to_vec(), 10.0f32));
             if font_size == 0.0 {
                 font_size = 10.0;
@@ -292,19 +292,10 @@ impl ExamController {
         res_dict.set(b"Font", Object::Dictionary(font_dict));
     }
 
-    /// Parsea la cadena /DA del campo (ej. "/Helv 10 Tf 0 g") para extraer
-    /// el nombre de la fuente y el tamaño.
-    fn parse_da(da: &[u8]) -> (Vec<u8>, f32) {        let s = String::from_utf8_lossy(da);
-        let tokens: Vec<&str> = s.split_whitespace().collect();
-        let mut font_name = b"Helv".to_vec();
-        let mut font_size = 10.0f32;
-        for i in 2..tokens.len() {
-            if tokens[i] == "Tf" {
-                font_name = tokens[i - 2].trim_start_matches('/').as_bytes().to_vec();
-                font_size = tokens[i - 1].parse().unwrap_or(10.0);
-                break;
-            }
-        }
+    fn set_font_conf(da: &[u8]) -> (Vec<u8>, f32) {        
+        let font_name = b"Calibri".to_vec();
+        let font_size = 11.0f32;
+        
         (font_name, font_size)
     }
 
