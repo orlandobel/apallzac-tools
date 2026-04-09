@@ -157,100 +157,130 @@ impl ExamController {
     }
 
     fn merge_documents(&mut self, temp_pdf_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-        // Load the temporary PDF document
         let temp_doc = Document::load(temp_pdf_path)?;
 
-        // If this is the first document, replace the empty exams_pdf with the temp_doc
         if self.exams_pdf.get_pages().is_empty() {
             self.exams_pdf = temp_doc;
         } else {
-            // For subsequent documents, use a simpler approach:
-            // Save current document to a temp file, then load both and create a new merged document
             let current_temp_path = std::env::temp_dir().join("current_exam.pdf").to_string_lossy().into_owned();
             self.exams_pdf.save(&current_temp_path)?;
-            
-            // Load both documents fresh
+
             let doc1 = Document::load(&current_temp_path)?;
             let doc2 = temp_doc;
-            
-            // Create a new document for merging
+
             let mut merged_doc = Document::with_version("1.4");
-            
-            // Copy all objects from the first document
+
+            // Copy all objects and record old->new ID mappings for each source document.
+            // The objects still contain references to the old IDs; we fix that below.
             let mut doc1_id_map: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::new();
             for (id, obj) in doc1.objects.iter() {
                 let new_id = merged_doc.add_object(obj.clone());
                 doc1_id_map.insert(*id, new_id);
             }
-            
-            // Copy all objects from the second document
+
             let mut doc2_id_map: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::new();
             for (id, obj) in doc2.objects.iter() {
                 let new_id = merged_doc.add_object(obj.clone());
                 doc2_id_map.insert(*id, new_id);
             }
-            
-            // Collect all pages from both documents
-            let mut all_pages = Vec::new();
-            
-            // Add pages from the first document
+
+            // Remap all internal references so they point to the new IDs in merged_doc.
+            // Without this step, /Contents, /Resources, /Font, etc. references inside
+            // each page still point to the original document's object IDs, which don't
+            // exist in merged_doc, causing pages to appear blank.
+            for new_id in doc1_id_map.values().cloned().collect::<Vec<_>>() {
+                if let Some(obj) = merged_doc.objects.remove(&new_id) {
+                    merged_doc.objects.insert(new_id, remap_references(obj, &doc1_id_map));
+                }
+            }
+
+            for new_id in doc2_id_map.values().cloned().collect::<Vec<_>>() {
+                if let Some(obj) = merged_doc.objects.remove(&new_id) {
+                    merged_doc.objects.insert(new_id, remap_references(obj, &doc2_id_map));
+                }
+            }
+
+            // Build an ordered list of all pages using the remapped IDs.
+            let mut all_pages: Vec<lopdf::ObjectId> = Vec::new();
+
             for (_page_num, page_id) in doc1.get_pages() {
                 if let Some(&new_page_id) = doc1_id_map.get(&page_id) {
                     all_pages.push(new_page_id);
                 }
             }
-            
-            // Add pages from the second document
+
             for (_page_num, page_id) in doc2.get_pages() {
                 if let Some(&new_page_id) = doc2_id_map.get(&page_id) {
                     all_pages.push(new_page_id);
                 }
             }
-            
-            // Create a new pages tree
+
+            // Build a fresh pages tree that owns all pages from both documents.
             let pages_root_id = merged_doc.new_object_id();
             let mut pages_dict = lopdf::Dictionary::new();
             pages_dict.set(b"Type", Object::Name(b"Pages".to_vec()));
             pages_dict.set(b"Count", Object::Integer(all_pages.len() as i64));
             pages_dict.set(b"Kids", Object::Array(all_pages.iter().map(|&id| Object::Reference(id)).collect()));
-            
             merged_doc.objects.insert(pages_root_id, Object::Dictionary(pages_dict));
-            
-            // Update page parent references
+
             for page_ref in &all_pages {
-                if let Some(page_obj) = merged_doc.objects.get_mut(&page_ref) {
+                if let Some(page_obj) = merged_doc.objects.get_mut(page_ref) {
                     if let Ok(page_dict) = page_obj.as_dict_mut() {
                         page_dict.set(b"Parent", Object::Reference(pages_root_id));
                     }
                 }
             }
-            
-            // Create and set the catalog
+
             let catalog_id = merged_doc.new_object_id();
             let mut catalog_dict = lopdf::Dictionary::new();
             catalog_dict.set(b"Type", Object::Name(b"Catalog".to_vec()));
             catalog_dict.set(b"Pages", Object::Reference(pages_root_id));
-            
             merged_doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
-            
-            // Set the trailer
+
             merged_doc.trailer.set(b"Root", Object::Reference(catalog_id));
             merged_doc.trailer.set(b"Size", Object::Integer(merged_doc.objects.len() as i64));
-            
-            // Replace the exams_pdf with the merged document
+
             self.exams_pdf = merged_doc;
-            
-            // Clean up temp file
+
             let _ = std::fs::remove_file(&current_temp_path);
         }
-        
-        // Save the combined document to templates/output.pdf for testing
+
         let output_path = format!("{}/output.pdf", self.base_path);
         self.exams_pdf.save(&output_path)?;
-        
+
         Ok(())
     }
   
+}
+
+/// Recursively walks an [`Object`] and replaces every [`Object::Reference`] whose
+/// ID appears in `id_map` with the corresponding new ID.  This is required when
+/// copying objects from one [`Document`] into another: the copied objects still
+/// contain references to the original document's object IDs, which need to be
+/// translated to the new ones assigned by the destination document.
+fn remap_references(obj: Object, id_map: &HashMap<lopdf::ObjectId, lopdf::ObjectId>) -> Object {
+    match obj {
+        Object::Reference(id) => Object::Reference(*id_map.get(&id).unwrap_or(&id)),
+        Object::Array(arr) => Object::Array(
+            arr.into_iter().map(|o| remap_references(o, id_map)).collect(),
+        ),
+        Object::Dictionary(dict) => {
+            let mut new_dict = lopdf::Dictionary::new();
+            for (k, v) in dict.into_iter() {
+                new_dict.set(k, remap_references(v, id_map));
+            }
+            Object::Dictionary(new_dict)
+        }
+        Object::Stream(mut stream) => {
+            let mut new_dict = lopdf::Dictionary::new();
+            for (k, v) in stream.dict.into_iter() {
+                new_dict.set(k, remap_references(v, id_map));
+            }
+            stream.dict = new_dict;
+            Object::Stream(stream)
+        }
+        other => other,
+    }
 }
 
 #[cfg(test)]
@@ -276,7 +306,7 @@ mod exam_controller_test {
     }
 
     #[test]
-    fn test_create_exam_pages() {
+    fn test_create_exam_two_pages() {
         let mut controller = ExamController::new();
         let candidates = vec![
             Candidate {
@@ -297,6 +327,40 @@ mod exam_controller_test {
 
         controller.create_exam_page(&candidates[0], "yellow.pdf").unwrap();
         controller.create_exam_page(&candidates[1], "brown1.pdf").unwrap();
+        
+        assert!(true);
+    }
+
+    #[test]
+    fn test_create_exam_three_pages() {
+        let mut controller = ExamController::new();
+        let candidates = vec![
+            Candidate {
+                school: Some("Some School".to_string()),
+                name: "John Doe".to_string(),
+                trainer: "Jane Smith".to_string(),
+                belt: BELTS::AMARILLO,
+                belt_size: "CH".to_string()
+            },
+            Candidate {
+                school: Some("Some School".to_string()),
+                name: "Jane Doe".to_string(),
+                trainer: "John Smith".to_string(),
+                belt: BELTS::CAFE1,
+                belt_size: "CH".to_string()
+            },
+            Candidate {
+                school: Some("Some School".to_string()),
+                name: "John Doe".to_string(),
+                trainer: "Jane Smith".to_string(),
+                belt: BELTS::VERDE,
+                belt_size: "CH".to_string()
+            }
+        ];
+
+        controller.create_exam_page(&candidates[0], "yellow.pdf").unwrap();
+        controller.create_exam_page(&candidates[1], "brown1.pdf").unwrap();
+        controller.create_exam_page(&candidates[2], "green.pdf").unwrap();
         
         assert!(true);
     }
