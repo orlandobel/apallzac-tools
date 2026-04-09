@@ -29,16 +29,19 @@ impl ExamController {
 
     pub fn create_sheet(&self, candidate: &Candidate, file: &str) -> Result<(), Box<dyn std::error::Error>> {
         let template_path = format!("{}/{}", self.base_path, file);
-        let output_path = format!("{}/output.pdf", self.base_path);
-        println!("Creating sheet from candidate: {:?}", candidate);
+        let output_path = std::env::temp_dir()
+            .join(format!(
+            "exam_output_{}_{}.pdf",
+            candidate.name.replace(' ', "_"),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis())
+                .unwrap_or(0)
+            ))
+            .to_string_lossy()
+            .into_owned();
 
         let mut template = AcroFormDocument::from_pdf(template_path).expect("error opening file");
-
-        let fields = template.fields()
-            .map_err(|e| { 
-                println!("Error getting fields: {:?}", e.to_string());
-                Box::new(e) as Box<dyn std::error::Error> 
-            })?;
 
         let mut values: HashMap<String, FieldValue> = HashMap::new();
         values.insert("date".to_string(), FieldValue::Text(self.date.clone()));
@@ -58,6 +61,12 @@ impl ExamController {
             Box::new(e)
         }).unwrap();
 
+        // TODO :: merge with global exams file
+
+        // Delete temporary file
+        if std::path::Path::new(&output_path).exists() {
+            std::fs::remove_file(&output_path)?;
+        }
         Ok(())
     }
 
@@ -126,7 +135,7 @@ impl ExamController {
             operations.push(Operation::new("Tj", vec![
                 Object::String(rd.text_bytes().clone(), lopdf::StringFormat::Literal),
             ]));
-            
+
             operations.push(Operation::new("ET", vec![]));
         }
 
