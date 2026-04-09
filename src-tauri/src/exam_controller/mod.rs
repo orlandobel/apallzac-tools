@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 use acroform::{AcroFormDocument, FieldValue};
 use lopdf::{Dictionary, Document, Object, content::{Content, Operation}};
+use field_render::FieldRender;
 
 use crate::belt_promotion_exam::{
     candidate::Candidate,
     belts::BELTS
 };
+
+mod field_render;
 
 pub struct ExamController {
     date: String,
@@ -67,29 +70,6 @@ impl ExamController {
         let form_id = document.get_object(catalog_id)?.as_dict()?
             .get(b"AcroForm")?.as_reference()?;
 
-        // /DA global del AcroForm (fuente por defecto)
-        let form_da: Option<Vec<u8>> = {
-            let form = document.get_object(form_id)?.as_dict()?;
-            match form.get(b"DA") {
-                Ok(Object::String(da, _)) => Some(da.clone()),
-                _ => None,
-            }
-        };
-
-        // Recursos de fuente del AcroForm (/DR /Font)
-        let font_resources: HashMap<Vec<u8>, Object> = {
-            let form = document.get_object(form_id)?.as_dict()?;
-            match form.get(b"DR") {
-                Ok(Object::Dictionary(dr)) => match dr.get(b"Font") {
-                    Ok(Object::Dictionary(fonts)) => {
-                        fonts.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
-                    }
-                    _ => HashMap::new(),
-                },
-                _ => HashMap::new(),
-            }
-        };
-
         // Página única del PDF
         let page_id = *document
             .get_pages()
@@ -120,151 +100,38 @@ impl ExamController {
         };
 
         // Datos de renderizado por widget
-        struct FieldRender {
-            x: f32,
-            y: f32,
-            font_name: Vec<u8>,
-            font_size: f32,
-            text_bytes: Vec<u8>,
-        }
-
-        let mut render_data: Vec<FieldRender> = Vec::new();
-
-        for &annot_id in &annot_ids {
-            let dict = document.get_object(annot_id)?.as_dict()?.clone();
-
-            // Solo anotaciones de tipo Widget
-            let is_widget = matches!(
-                dict.get(b"Subtype"),
-                Ok(Object::Name(n)) if n == b"Widget"
-            );
-            if !is_widget {
-                continue;
-            }
-
-            // Rectángulo [x1, y1, x2, y2] — debe existir en la anotación
-            let rect: Vec<f32> = match dict.get(b"Rect") {
-                Ok(Object::Array(arr)) if arr.len() >= 4 => arr
-                    .iter()
-                    .take(4)
-                    .map(|o| o.as_float().unwrap_or(0.0))
-                    .collect(),
-                _ => continue,
-            };
-
-            // /V: se busca primero en el widget; si no, en el campo padre (/Parent)
-            let value_bytes: Vec<u8> = {
-                let direct = match dict.get(b"V") {
-                    Ok(Object::String(bytes, _)) if !bytes.is_empty() => {
-                        Some(bytes.clone())
-                    }
-                    _ => None,
-                };
-                if let Some(v) = direct {
-                    v
-                } else {
-                    let parent_id = match dict.get(b"Parent") {
-                        Ok(Object::Reference(id)) => *id,
-                        _ => continue,
-                    };
-                    let parent = document.get_object(parent_id)?.as_dict()?.clone();
-                    match parent.get(b"V") {
-                        Ok(Object::String(bytes, _)) if !bytes.is_empty() => bytes.clone(),
-                        _ => continue,
-                    }
-                }
-            };
-
-            let text_bytes = Self::pdf_string_to_latin1(&value_bytes);
-            if text_bytes.is_empty() {
-                continue;
-            }
-
-            // /DA: widget → padre → /AcroForm → por defecto
-            let da_bytes: Option<Vec<u8>> = match dict.get(b"DA") {
-                Ok(Object::String(da, _)) => Some(da.clone()),
-                _ => {
-                    if let Ok(Object::Reference(parent_id)) = dict.get(b"Parent") {
-                        let parent_id = *parent_id;
-                        document
-                            .get_object(parent_id)
-                            .ok()
-                            .and_then(|o| o.as_dict().ok())
-                            .and_then(|d| d.get(b"DA").ok())
-                            .and_then(|o| {
-                                if let Object::String(da, _) = o {
-                                    Some(da.clone())
-                                } else {
-                                    None
-                                }
-                            })
-                    } else {
-                        None
-                    }
-                }
-            };
-
-            let (font_name, mut font_size) = Self::set_font_conf(belt);
-            if font_size == 0.0 {
-                font_size = 10.0;
-            }
-
-            let x = rect[0] + 2.0;
-            let field_height = rect[3] - rect[1];
-            let y = rect[1] + ((field_height - font_size) / 2.0).max(0.0);
-
-            render_data.push(FieldRender { x, y, font_name, font_size, text_bytes });
-        }
+       let render_data: Vec<FieldRender> = FieldRender::from_annot_ids(&annot_ids, &document, belt)?;
 
         // --- Fase 2: construir stream de contenido con el texto plano ---
-
         let mut operations: Vec<Operation> = Vec::new();
         for rd in &render_data {
             operations.push(Operation::new("BT", vec![]));
+
             // Color negro
             operations.push(Operation::new("g", vec![Object::Real(0.0)]));
+
             // Fuente y tamaño
             operations.push(Operation::new("Tf", vec![
-                Object::Name(rd.font_name.clone()),
-                Object::Real(rd.font_size),
+                Object::Name(rd.font_name().clone()),
+                Object::Real(rd.font_size()),
             ]));
+
             // Mover al origen del campo
             operations.push(Operation::new("Td", vec![
-                Object::Real(rd.x),
-                Object::Real(rd.y),
+                Object::Real(rd.x()),
+                Object::Real(rd.y()),
             ]));
+
             // Imprimir texto
             operations.push(Operation::new("Tj", vec![
-                Object::String(rd.text_bytes.clone(), lopdf::StringFormat::Literal),
+                Object::String(rd.text_bytes().clone(), lopdf::StringFormat::Literal),
             ]));
+            
             operations.push(Operation::new("ET", vec![]));
         }
 
         let content_bytes = Content { operations }.encode()?;
         document.add_page_contents(page_id, content_bytes)?;
-
-        // --- Fase 3: copiar fuentes del AcroForm a los recursos de la página ---
-
-        if !font_resources.is_empty() {
-            // Detectar si /Resources es un objeto indirecto
-            let res_id = {
-                let page = document.get_dictionary(page_id)?;
-                page.get(b"Resources").and_then(|o| o.as_reference()).ok()
-            };
-
-            if let Some(res_id) = res_id {
-                let res_dict = document.get_dictionary_mut(res_id)?;
-                Self::merge_fonts(res_dict, &font_resources);
-            } else {
-                let page = document.get_object_mut(page_id).and_then(Object::as_dict_mut)?;
-                let mut res_dict = match page.get(b"Resources").ok().cloned() {
-                    Some(Object::Dictionary(d)) => d,
-                    _ => Dictionary::new(),
-                };
-                Self::merge_fonts(&mut res_dict, &font_resources);
-                page.set(b"Resources", Object::Dictionary(res_dict));
-            }
-        }
 
         // --- Fase 4: eliminar anotaciones de widget y el AcroForm ---
 
@@ -274,54 +141,7 @@ impl ExamController {
         document.save(path)?;
         Ok(())
     }
-
-    /// Inserta las entradas de `fonts` en el subdirectorio /Font del diccionario de recursos.
-    fn merge_fonts(res_dict: &mut Dictionary, fonts: &HashMap<Vec<u8>, Object>) {
-        let existing = res_dict.get(b"Font").ok().cloned();
-        let mut font_dict = match existing {
-            Some(Object::Dictionary(d)) => d,
-            _ => Dictionary::new(),
-        };
-        for (k, v) in fonts {
-            font_dict.set(k.clone(), v.clone());
-        }
-        res_dict.set(b"Font", Object::Dictionary(font_dict));
-    }
-
-    fn set_font_conf(belt: &BELTS) -> (Vec<u8>, f32) {        
-        let font_name = b"Calibri".to_vec();
-        
-        let font_size = match belt {
-            BELTS::AMARILLO => { 11.0f32 },
-            BELTS::NARANJA => { 11.0f32 },
-            BELTS::MORADO => { 11.0f32 },
-            BELTS::AZUL => { 11.0f32 },
-            BELTS::VERDE => { 9.0f32 },
-            BELTS::CAFE => { 8.5f32 },
-            BELTS::CAFE1 => { 8.5f32 },
-            BELTS::CAFE2 => { 8.5f32 },
-            BELTS::CAFE3 => { 8.5f32 }
-        };
-        
-        (font_name, font_size)
-    }
-
-    /// Convierte una cadena PDF a bytes Latin-1 (WinAnsiEncoding).
-    /// Maneja tanto cadenas en PDFDocEncoding como UTF-16BE (con BOM 0xFE 0xFF).
-    fn pdf_string_to_latin1(bytes: &[u8]) -> Vec<u8> {
-        if bytes.starts_with(&[0xFE, 0xFF]) {
-            let utf16: Vec<u16> = bytes[2..]
-                .chunks_exact(2)
-                .map(|c| u16::from_be_bytes([c[0], c[1]]))
-                .collect();
-            String::from_utf16_lossy(&utf16)
-                .chars()
-                .map(|c| if (c as u32) <= 0xFF { c as u8 } else { b'?' })
-                .collect()
-        } else {
-            bytes.to_vec()
-        }
-    }
+  
 }
 
 
