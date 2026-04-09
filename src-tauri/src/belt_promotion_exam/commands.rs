@@ -24,3 +24,19 @@ pub fn load_data_of_file(state: tauri::State<'_, Mutex<AppState>>, path: &str) -
         }
     }
 }
+
+#[tauri::command]
+pub fn generate_exams(state: tauri::State<'_, Mutex<AppState>>) -> Result<(), String> {
+    let mut app = state
+        .lock()
+        .map_err(|e| format!("Failed to acquire app state lock: {}", e))?;
+
+    match &mut app.0 {
+        Controllers::BPEController(controller) => {
+            controller.generate_exams().map_err(|e| e.to_string())
+        }
+        Controllers::None => {
+            Err("No controller found".to_string())
+        }
+    }
+}

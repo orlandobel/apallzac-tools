@@ -1,4 +1,5 @@
 use super::candidate::Candidate;
+use super::belts::BELTS;
 use crate::exam_controller::ExamController;
 use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook};
 
@@ -33,6 +34,33 @@ impl BeltPromotionExamController {
         }
 
         Ok(candidates)
+    }
+
+    pub fn generate_exams(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let candidates = self.load_data()?;
+        let mut exam_controller = ExamController::new();
+        
+        for candidate in candidates {
+            let exam = match candidate.belt {
+                BELTS::AMARILLO => "yellow.pdf",
+                BELTS::NARANJA => "orange.pdf",
+                BELTS::MORADO => "purple.pdf",
+                BELTS::AZUL => "blue.pdf",
+                BELTS::VERDE => "green.pdf",
+                BELTS::CAFE => "brown.pdf",
+                BELTS::CAFE1 => "brown1.pdf",
+                BELTS::CAFE2 => "brown2.pdf",
+                BELTS::CAFE3 => "brown3.pdf",
+            };
+
+            exam_controller.create_exam_page(&candidate, exam)?;
+        }
+        
+        let _exams = exam_controller.get_exams_as_base64();
+
+        //TODO :: emit event to front with generated base64
+        
+        Ok(())
     }
 }
 

@@ -16,7 +16,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            bpe_commands::load_data_of_file
+            bpe_commands::load_data_of_file,
+            bpe_commands::generate_exams,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
