@@ -75,6 +75,20 @@ impl ExamController {
         Ok(())
     }
 
+    pub fn get_exams_as_base64(&mut self) -> Result<String, Box<dyn std::error::Error>> {
+        use base64::engine::{general_purpose, Engine};
+        
+        //let temp_path = std::env::temp_dir().join("exams.pdf").to_string_lossy().into_owned();
+        //self.exams_pdf.save(&temp_path)?;
+
+        //let buffer = std::fs::read(&temp_path)?;
+        let mut buffer: Vec<u8> = Vec::new();
+        self.exams_pdf.save_to(&mut buffer)?;
+        let base64 = general_purpose::STANDARD.encode(&buffer);
+        
+        Ok(base64)
+    }
+    
     fn flatten_document(&self, path: &str, belt: &BELTS) -> Result<(), Box<dyn std::error::Error>> {
         let mut document = Document::load(path)?;
 
@@ -245,9 +259,6 @@ impl ExamController {
             let _ = std::fs::remove_file(&current_temp_path);
         }
 
-        let output_path = format!("{}/output.pdf", self.base_path);
-        self.exams_pdf.save(&output_path)?;
-
         Ok(())
     }
   
@@ -363,5 +374,34 @@ mod exam_controller_test {
         controller.create_exam_page(&candidates[2], "green.pdf").unwrap();
         
         assert!(true);
+    }
+
+    #[test]
+    fn test_get_exams_as_base64_wiht_hundred_candidates() {
+        let mut controller = ExamController::new();
+        let candidates = generate_candidates(100);
+
+        for candidate in candidates {
+            controller.create_exam_page(&candidate, "yellow.pdf").unwrap();
+        }
+
+        let base64 = controller.get_exams_as_base64().unwrap();
+        assert!(!base64.is_empty());
+    }
+
+    fn generate_candidates(count: usize) -> Vec<Candidate> {
+        let mut candidates: Vec<Candidate> = Vec::new();
+        
+        for i in 0..count {
+            candidates.push(Candidate {
+                school: Some("Some School".to_string()),
+                name: format!("candidate_{}", i).to_string(),
+                trainer: "Some trainer".to_string(),
+                belt: BELTS::AMARILLO,
+                belt_size: "CH".to_string()
+            });
+        }
+
+        candidates
     }
 }
