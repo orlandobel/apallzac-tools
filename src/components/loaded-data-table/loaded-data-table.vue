@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import Candidate from '@/types/Candidate.type';
 
-defineProps<{
+const props = defineProps<{
     headers: string[]
     data: Candidate[]
+    onGenerateClick: () => void
 }>()
-
-const generate = () => {
-    console.log("TODO :: generate PDF and change view to preview")
-}
 </script>
 
 <template>
@@ -43,7 +40,7 @@ const generate = () => {
             </tbody>
         </table>
 
-        <button class=" bg-primary rounded-lg absolute bottom-0 right-0 py-2 px-4 my-2 mx-4" @click="generate">
+        <button class=" bg-primary rounded-lg absolute bottom-0 right-0 py-2 px-4 my-2 mx-4" @click="onGenerateClick">
             Generar PDF
         </button>
     </div>

@@ -44,6 +44,11 @@ const vuetify = createVuetify({
     VTabs: {
         height: 55,
     },
+    VDateInput: {
+        density: 'compact',
+        variant: 'solo-filled',
+        rounded: 'lg',
+    },
   },
 })
 
