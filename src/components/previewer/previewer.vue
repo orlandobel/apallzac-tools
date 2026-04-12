@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
@@ -81,6 +81,15 @@ listen<string>('document-created', (event) => {
 	pdf.value = event.payload;
 });
 
+onMounted(() => {
+	console.log(btn_enabled.value)
+	console.log(zoom_in_enabled.value)
+	console.log(zoom_out_enabled.value)
+	
+	if(pdf.value) {
+		renderPdf();
+	}
+})
 </script>
 
 
@@ -93,9 +102,9 @@ listen<string>('document-created', (event) => {
 			</div>
 
 			<div class="flex items-center gap-2">
-				<v-btn variant="text" icon="mdi-magnify-minus" :disabled="zoom_out_enabled" @click="zoomOut" />
+				<v-btn variant="text" icon="mdi-magnify-minus" :disabled="!zoom_out_enabled" @click="zoomOut" />
 				<span class="text-sm">{{ Math.round(zoomLevel * 100) }}%</span>
-				<v-btn variant="text" icon="mdi-magnify-plus" :disabled="zoom_in_enabled" @click="zoomIn" />
+				<v-btn variant="text" icon="mdi-magnify-plus" :disabled="!zoom_in_enabled" @click="zoomIn" />
 			</div>
 
 			<div class="flex gap-2 p-4">
