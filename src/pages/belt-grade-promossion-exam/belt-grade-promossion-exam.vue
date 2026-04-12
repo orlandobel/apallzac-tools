@@ -4,6 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 
 import { VDateInput } from 'vuetify/labs/VDateInput';
+import { VSnackbar } from 'vuetify/components/VSnackbar';
 
 import LoadedDataTable from '@/components/loaded-data-table/loaded-data-table.vue';
 import previewer from '@/components/previewer/previewer.vue';
@@ -22,6 +23,9 @@ const headers = [
 
 const data = ref<Candidate[]>([])
 const date = ref<string | null>(null)
+const error = ref<string>("")
+const show_snack = ref<boolean>(false)
+const generating = ref<boolean>(false)
 
 const open_file = async (event: Event) => {
 	event.preventDefault()
@@ -39,7 +43,31 @@ const open_file = async (event: Event) => {
 }
 
 const generateExams = () => {
-	//console.log("TODO :: generate PDF and change view to preview")
+	if (!date.value) {
+		console.error("Fecha no seleccionada")
+		error.value = "Fecha no seleccionada"
+		show_snack.value = true
+		return
+	}
+
+	generating.value = true
+
+	// Ensure date is in dd/mm/yyyy format
+	const formattedDate = new Date(date.value).toLocaleDateString('es-ES', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric'
+	}).replace(/\//g, '/')
+
+	invoke('generate_exams', { date: formattedDate })
+		.catch(_ => {
+			error.value = "Error al generar los exámenes, el archivo fue cargado?"
+			show_snack.value = true
+			console.error('Error al generar los exámenes, el archivo fue cargado?')
+		})
+		.then(_ => {
+			generating.value = false
+		})
 }
 
 </script>
@@ -55,37 +83,34 @@ const generateExams = () => {
 
 				<div class="flex items-center justify-center gap-4 w-xs mx-4 px-4 border-l-1 border-l-gray-500">
 					<div class="flex flex-1 justify-center items-center">
-						<v-date-input 
-							prepend-icon="" 
-							variant="solo-filled" 
-							class="h-[40px]" 
-							input-format="DD/MM/YYYY"
+						<v-date-input prepend-icon="" variant="solo-filled" class="h-[40px]" input-format="d/m/Y"
 							v-model="date" />
 					</div>
 
 					<div class="flex-1">
-						<label for="file"
-							class="block w-full rounded-lg border-none 
+						<label for="file" class="block w-full rounded-lg border-none 
 							bg-accent px-3 py-2 text-center text-text cursor-pointer h-[40px] flex items-center justify-center">
 							Elegir archivo
 						</label>
-	
-						<input type="file" name="file"id="file"
-							class="sr-only"
-							accept="xls, xlsx, ods, gsheet"
-							@click="open_file"
-							/>
+
+						<input type="file" name="file" id="file" class="sr-only" accept="xls, xlsx, ods, gsheet"
+							@click="open_file" />
 					</div>
 				</div>
 			</section>
 
 
-			<section class="flex-1 flex overflow-hidden min-h-0 w-full">
+			<section class="relative flex-1 flex overflow-hidden min-h-0 w-full">
+				<v-snackbar location="top end" v-model="generating" :timeout="-1" text="Generando exámenes..." contained loading />
+
+				<v-snackbar color="error" location="top end" prepend-icon="$error" :text="error" timeout="3500"
+					title="Error" contained v-model="show_snack" />
+
 				<v-tabs-window class="h-full w-full overflow-auto" v-model="activeTab">
 					<v-tabs-window-item class="px-1" value="datos">
-						<loaded-data-table :headers="headers" :data="data" :onGenerateClick="generateExams" />
+						<loaded-data-table :headers="headers" :data="data" :disabled="generating" :onGenerateClick="generateExams" />
 					</v-tabs-window-item>
-	
+
 					<v-tabs-window-item value="previsualizacion" class="relative">
 						<previewer />
 					</v-tabs-window-item>
@@ -106,5 +131,12 @@ const generateExams = () => {
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 	border: 0;
+}
+
+:deep(.v-snackbar__wrapper) {
+	margin: 8px !important;
+	padding: 8px !important;
+
+	gap: 12px !important;
 }
 </style>
