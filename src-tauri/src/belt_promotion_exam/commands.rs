@@ -26,7 +26,7 @@ pub fn load_data_of_file(state: tauri::State<'_, Mutex<AppState>>, path: &str) -
 }
 
 #[tauri::command]
-pub fn generate_exams(handler: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>, date: &str) -> Result<(), String> {
+pub async fn generate_exams(handler: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>, date: &str) -> Result<(), String> {
     let mut app_state = state
         .lock()
         .map_err(|e| format!("Failed to acquire app state lock: {}", e))?;

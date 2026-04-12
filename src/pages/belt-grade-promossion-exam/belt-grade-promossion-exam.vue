@@ -44,7 +44,6 @@ const open_file = async (event: Event) => {
 
 const generateExams = () => {
 	if (!date.value) {
-		console.error("Fecha no seleccionada")
 		error.value = "Fecha no seleccionada"
 		show_snack.value = true
 		return
@@ -60,6 +59,9 @@ const generateExams = () => {
 	}).replace(/\//g, '/')
 
 	invoke('generate_exams', { date: formattedDate })
+		.then(_ => {
+			activeTab.value = 'previsualizacion'
+		})
 		.catch(_ => {
 			error.value = "Error al generar los exámenes, el archivo fue cargado?"
 			show_snack.value = true
