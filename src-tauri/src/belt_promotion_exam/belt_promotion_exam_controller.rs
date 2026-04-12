@@ -1,3 +1,5 @@
+use tauri::Emitter;
+
 use super::candidate::Candidate;
 use super::belts::BELTS;
 use crate::exam_controller::ExamController;
@@ -36,7 +38,7 @@ impl BeltPromotionExamController {
         Ok(candidates)
     }
 
-    pub fn generate_exams(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn generate_exams(&mut self, handler: tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         let candidates = self.load_data()?;
         let mut exam_controller = ExamController::new();
         
@@ -56,9 +58,9 @@ impl BeltPromotionExamController {
             exam_controller.create_exam_page(&candidate, exam)?;
         }
         
-        let _exams = exam_controller.get_exams_as_base64();
+        let exams = exam_controller.get_exams_as_base64()?;
 
-        //TODO :: emit event to front with generated base64
+        handler.emit("document-created", exams)?;
         
         Ok(())
     }
