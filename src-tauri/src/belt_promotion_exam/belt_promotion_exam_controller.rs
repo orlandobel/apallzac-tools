@@ -8,6 +8,7 @@ use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, wor
 pub struct BeltPromotionExamController {
     workbook: Workbook,
     col_config: BeltPromotionConfiguration,
+    exam: Option<String>,
 }
 
 impl BeltPromotionExamController {
@@ -22,6 +23,7 @@ impl BeltPromotionExamController {
         Ok(BeltPromotionExamController {
             workbook,
             col_config,
+            exam: None,
         })
     }
 
@@ -60,11 +62,17 @@ impl BeltPromotionExamController {
         
         let exams = exam_controller.get_exams_as_base64()?;
 
-        handler.emit("document-created", exams)?;
+        handler.emit("document-created", &exams)?;
         
+        self.exam = Some(exams);
         Ok(())
     }
+
+    pub fn get_existing_document(&self) -> Option<String> {
+        self.exam.clone()
+    }
 }
+
 
 #[cfg(test)]
 mod tests {

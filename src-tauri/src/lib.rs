@@ -18,6 +18,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             bpe_commands::load_data_of_file,
             bpe_commands::generate_exams,
+            bpe_commands::get_existing_document,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

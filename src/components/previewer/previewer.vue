@@ -4,6 +4,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
+import { invoke } from '@tauri-apps/api/core';
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -82,13 +83,9 @@ listen<string>('document-created', (event) => {
 });
 
 onMounted(() => {
-	console.log(btn_enabled.value)
-	console.log(zoom_in_enabled.value)
-	console.log(zoom_out_enabled.value)
-	
-	if(pdf.value) {
-		renderPdf();
-	}
+	invoke('get_existing_document').then((result) => {
+		pdf.value = result as string;
+	});
 })
 </script>
 

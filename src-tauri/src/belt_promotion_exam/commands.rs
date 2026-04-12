@@ -40,3 +40,20 @@ pub fn generate_exams(handler: tauri::AppHandle, state: tauri::State<'_, Mutex<A
         }
     }
 }
+
+#[tauri::command]
+pub async fn get_existing_document(state: tauri::State<'_, Mutex<AppState>>) -> Result<Option<String>, String> {
+    let app = state
+        .lock()
+        .map_err(|e| format!("Failed to acquire app state lock: {}", e))
+        .unwrap();
+
+    match &app.0 {
+        Controllers::BPEController(controller) => {
+            Ok(controller.get_existing_document())
+        }
+        Controllers::None => {
+            Ok(None)
+        }
+    }
+}
