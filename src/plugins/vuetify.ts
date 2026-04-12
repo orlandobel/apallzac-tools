@@ -15,9 +15,6 @@ const vuetify = createVuetify({
   },
   theme: {
     themes: {
-      light: {
-        colors: theme.colors,
-      },
       dark: {
         colors: theme.colors,
       }
@@ -25,12 +22,10 @@ const vuetify = createVuetify({
   },
   defaults: {
     VAppBar: {
-      color: 'primary',
       elevateOnScroll: true,
       flat: false,
     },
     VBtn: {
-      color: 'primary',
       rounded: 'lg',
     },
     VTextField: {

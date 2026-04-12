@@ -48,7 +48,7 @@ const generateExams = () => {
 	<main class="flex h-screen overflow-hidden">
 		<div class="p0 flex-1 flex flex-col h-full">
 			<section class="shrink-0 w-full flex">
-				<v-tabs v-model="activeTab" background-color="grey.lighten4" grow>
+				<v-tabs v-model="activeTab" color="primary" grow>
 					<v-tab value="datos">Datos</v-tab>
 					<v-tab value="previsualizacion">Previsualización</v-tab>
 				</v-tabs>
@@ -66,7 +66,7 @@ const generateExams = () => {
 					<div class="flex-1">
 						<label for="file"
 							class="block w-full rounded-lg border-none 
-							bg-accent px-3 py-2 text-center text-white cursor-pointer h-[40px] flex items-center justify-center">
+							bg-accent px-3 py-2 text-center text-text cursor-pointer h-[40px] flex items-center justify-center">
 							Elegir archivo
 						</label>
 	

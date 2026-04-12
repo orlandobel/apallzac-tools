@@ -7,9 +7,9 @@ export const theme = {
     info: '#2196F3',
     success: '#4CAF50',
     warning: '#FFC107',
-    background: '#FAFAFA',
-    surface: '#FFFFFF',
-    text: '#212121',
+    background: '#101828',
+    surface: '#1E293B',
+    text: '#E5E7EB',
   },
   typography: {
     fontFamily: 'Roboto, sans-serif',
