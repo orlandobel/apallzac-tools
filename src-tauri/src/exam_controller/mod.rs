@@ -17,7 +17,7 @@ pub struct ExamController {
 }
 
 impl ExamController {
-    pub fn new() -> Self{
+    pub fn new(date: &str) -> Self{
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let base_path = format!("{}/templates", manifest_dir);
 
@@ -25,7 +25,7 @@ impl ExamController {
         let combined_pdf = Document::with_version("1.4");
 
         ExamController { 
-            date: "19/04/2026".to_string(),
+            date: date.to_string(),
             base_path,
             exams_pdf: combined_pdf
         }
@@ -300,7 +300,7 @@ mod exam_controller_test {
 
     #[test]
     fn test_create_exam_page() {
-        let mut controller = ExamController::new();
+        let mut controller = ExamController::new("19/04/2026");
         let candidate = Candidate {
             school: Some("Some School".to_string()),
             name: "John Doe".to_string(),
@@ -318,7 +318,7 @@ mod exam_controller_test {
 
     #[test]
     fn test_create_exam_two_pages() {
-        let mut controller = ExamController::new();
+        let mut controller = ExamController::new("19/04/2026");
         let candidates = vec![
             Candidate {
                 school: Some("Some School".to_string()),
@@ -344,7 +344,7 @@ mod exam_controller_test {
 
     #[test]
     fn test_create_exam_three_pages() {
-        let mut controller = ExamController::new();
+        let mut controller = ExamController::new("19/04/2026");
         let candidates = vec![
             Candidate {
                 school: Some("Some School".to_string()),
@@ -378,7 +378,7 @@ mod exam_controller_test {
 
     #[test]
     fn test_get_exams_as_base64_wiht_hundred_candidates() {
-        let mut controller = ExamController::new();
+        let mut controller = ExamController::new("19/04/2026");
         let candidates = generate_candidates(100);
 
         for candidate in candidates {

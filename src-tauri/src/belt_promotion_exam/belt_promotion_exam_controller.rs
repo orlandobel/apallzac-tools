@@ -40,9 +40,9 @@ impl BeltPromotionExamController {
         Ok(candidates)
     }
 
-    pub fn generate_exams(&mut self, handler: tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn generate_exams(&mut self, date: &str, handler: tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
         let candidates = self.load_data()?;
-        let mut exam_controller = ExamController::new();
+        let mut exam_controller = ExamController::new(date);
         
         for candidate in candidates {
             let exam = match candidate.belt {

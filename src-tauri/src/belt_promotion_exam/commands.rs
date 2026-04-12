@@ -33,7 +33,7 @@ pub async fn generate_exams(handler: tauri::AppHandle, state: tauri::State<'_, M
 
     match &mut app_state.0 {
         Controllers::BPEController(controller) => {
-            controller.generate_exams(handler).map_err(|e| e.to_string())
+            controller.generate_exams(date, handler).map_err(|e| e.to_string())
         }
         Controllers::None => {
             Err("No controller found".to_string())
