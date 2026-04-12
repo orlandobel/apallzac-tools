@@ -44,7 +44,10 @@ impl BeltPromotionExamController {
         let candidates = self.load_data()?;
         let mut exam_controller = ExamController::new(date);
         
-        for candidate in candidates {
+        let mut sorted_candidates = candidates.into_iter().collect::<Vec<Candidate>>();
+        sorted_candidates.sort_by(|a, b| a.belt.cmp(&b.belt));
+
+        for candidate in sorted_candidates {
             let exam = match candidate.belt {
                 BELTS::AMARILLO => "yellow.pdf",
                 BELTS::NARANJA => "orange.pdf",

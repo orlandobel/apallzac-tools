@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use unicode_normalization::UnicodeNormalization;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BELTS {
     AMARILLO,
     NARANJA,
