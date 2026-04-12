@@ -9,6 +9,7 @@ import { VSnackbar } from 'vuetify/components/VSnackbar';
 import LoadedDataTable from '@/components/loaded-data-table/loaded-data-table.vue';
 import previewer from '@/components/previewer/previewer.vue';
 import Candidate from '@/types/Candidate.type';
+import { listen } from '@tauri-apps/api/event';
 
 type TabKey = 'datos' | 'previsualizacion'
 const activeTab = ref<TabKey>('datos')
@@ -26,6 +27,9 @@ const date = ref<string | null>(null)
 const error = ref<string>("")
 const show_snack = ref<boolean>(false)
 const generating = ref<boolean>(false)
+
+const total_candidates = ref<number>(0)
+const current_progress = ref<number>(0)
 
 const open_file = async (event: Event) => {
 	event.preventDefault()
@@ -72,6 +76,13 @@ const generateExams = () => {
 		})
 }
 
+listen<number>('total-candidates', (event) => {
+	total_candidates.value = event.payload
+})
+
+listen<void>('current-progress', _ => {
+	current_progress.value++
+})
 </script>
 
 <template>
@@ -103,7 +114,9 @@ const generateExams = () => {
 
 
 			<section class="relative flex-1 flex overflow-hidden min-h-0 w-full">
-				<v-snackbar location="top end" v-model="generating" :timeout="-1" text="Generando exámenes..." contained loading />
+				<v-snackbar location="top end" v-model="generating" :timeout="-1" contained loading >
+					Generando exámenes... {{ current_progress }} / {{ total_candidates }}
+				</v-snackbar>
 
 				<v-snackbar color="error" location="top end" prepend-icon="$error" :text="error" timeout="3500"
 					title="Error" contained v-model="show_snack" />

@@ -47,7 +47,8 @@ impl BeltPromotionExamController {
         let mut sorted_candidates = candidates.into_iter().collect::<Vec<Candidate>>();
         sorted_candidates.sort_by(|a, b| a.belt.cmp(&b.belt));
 
-        for candidate in sorted_candidates {
+        handler.emit("total-candidates", sorted_candidates.len())?;
+        for candidate in sorted_candidates.iter() {
             let exam = match candidate.belt {
                 BELTS::AMARILLO => "yellow.pdf",
                 BELTS::NARANJA => "orange.pdf",
@@ -61,6 +62,7 @@ impl BeltPromotionExamController {
             };
 
             exam_controller.create_exam_page(&candidate, exam)?;
+            handler.emit("current-progress", ())?;
         }
         
         let exams = exam_controller.get_exams_as_base64()?;

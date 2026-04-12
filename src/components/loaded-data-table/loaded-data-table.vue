@@ -41,7 +41,7 @@ const props = defineProps<{
             </tbody>
         </table>
 
-        <button class="absolute bg-primary disabled:opacity-50  rounded-lg bottom-0 right-0 py-2 px-4 my-2 mx-4" :disabled="disabled" @click="onGenerateClick">
+        <button class="fixed bg-primary disabled:opacity-50  rounded-lg bottom-0 right-0 py-2 px-4 my-2 mx-4" :disabled="disabled" @click="onGenerateClick">
             Generar PDF
         </button>
     </div>
