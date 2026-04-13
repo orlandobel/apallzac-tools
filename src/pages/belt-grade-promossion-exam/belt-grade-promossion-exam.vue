@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { open } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -82,6 +82,13 @@ listen<number>('total-candidates', (event) => {
 
 listen<void>('current-progress', _ => {
 	current_progress.value++
+})
+
+onMounted(() => {
+	invoke('get_loaded_candidates')
+		.then((loadedCandidates) => {
+			data.value = loadedCandidates as Candidate[]
+		})
 })
 </script>
 

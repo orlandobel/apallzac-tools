@@ -42,6 +42,22 @@ pub async fn generate_exams(handler: tauri::AppHandle, state: tauri::State<'_, M
 }
 
 #[tauri::command]
+pub async fn get_loaded_candidates(state: tauri::State<'_, Mutex<AppState>>) -> Result<Vec<Candidate>, String> {
+    let mut app_state = state
+        .lock()
+        .map_err(|e| format!("Failed to acquire app state lock: {}", e))?;
+
+    match &mut app_state.0 {
+        Controllers::BPEController(controller) => {
+            Ok(controller.get_loaded_candidates())
+        }
+        Controllers::None => {
+            Err("No controller found".to_string())
+        }
+    }
+}
+
+#[tauri::command]
 pub async fn get_existing_document(state: tauri::State<'_, Mutex<AppState>>) -> Result<Option<String>, String> {
     let app = state
         .lock()

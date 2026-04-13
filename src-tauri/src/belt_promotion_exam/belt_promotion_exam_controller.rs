@@ -8,6 +8,7 @@ use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, wor
 pub struct BeltPromotionExamController {
     workbook: Workbook,
     col_config: BeltPromotionConfiguration,
+    candidates: Vec<Candidate>,
     exam: Option<String>,
 }
 
@@ -23,25 +24,25 @@ impl BeltPromotionExamController {
         Ok(BeltPromotionExamController {
             workbook,
             col_config,
+            candidates: Vec::new(),
             exam: None,
         })
     }
 
     pub fn load_data(&mut self) -> Result<Vec<Candidate>, Box<dyn std::error::Error>> {
-        let mut candidates: Vec<Candidate> = Vec::new();
         let sheet = self.workbook.get_sheet()?;
 
         for row in sheet.skip(1) {
             let data = row?;
             let candidate = Candidate::new(&self.col_config, &data)?;
-            candidates.push(candidate);
+            self.candidates.push(candidate);
         }
 
-        Ok(candidates)
+        Ok(self.candidates.clone())
     }
 
     pub fn generate_exams(&mut self, date: &str, handler: tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-        let candidates = self.load_data()?;
+        let candidates = self.candidates.clone();
         let mut exam_controller = ExamController::new(date);
         
         let mut sorted_candidates = candidates.into_iter().collect::<Vec<Candidate>>();
@@ -72,6 +73,11 @@ impl BeltPromotionExamController {
         self.exam = Some(exams);
         Ok(())
     }
+
+    pub fn get_loaded_candidates(&self) -> Vec<Candidate> {
+        self.candidates.clone()
+    }
+
 
     pub fn get_existing_document(&self) -> Option<String> {
         self.exam.clone()
