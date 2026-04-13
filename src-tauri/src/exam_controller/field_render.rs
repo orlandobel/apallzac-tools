@@ -12,10 +12,20 @@ pub struct FieldRender {
 
 impl FieldRender {
     fn new(x: f32, y: f32, font_name: Vec<u8>, font_size: f32, text_bytes: Vec<u8>) -> Self {
-        FieldRender { x, y, font_name, font_size, text_bytes }
+        FieldRender {
+            x,
+            y,
+            font_name,
+            font_size,
+            text_bytes,
+        }
     }
 
-    pub fn from_annot_ids(annot_ids: &Vec<lopdf::ObjectId>, document: &lopdf::Document, belt: &BELTS) -> Result<Vec<Self>, Box<dyn std::error::Error>> {
+    pub fn from_annot_ids(
+        annot_ids: &Vec<lopdf::ObjectId>,
+        document: &lopdf::Document,
+        belt: &BELTS,
+    ) -> Result<Vec<Self>, Box<dyn std::error::Error>> {
         let mut field_renders: Vec<Self> = Vec::new();
 
         for &annot_id in annot_ids {
@@ -43,9 +53,7 @@ impl FieldRender {
             // /V: se busca primero en el widget; si no, en el campo padre (/Parent)
             let value_bytes: Vec<u8> = {
                 let direct = match dict.get(b"V") {
-                    Ok(Object::String(bytes, _)) if !bytes.is_empty() => {
-                        Some(bytes.clone())
-                    }
+                    Ok(Object::String(bytes, _)) if !bytes.is_empty() => Some(bytes.clone()),
                     _ => None,
                 };
                 if let Some(v) = direct {
@@ -103,22 +111,21 @@ impl FieldRender {
         self.text_bytes.clone()
     }
 
-
-    fn set_font_conf(belt: &BELTS) -> (Vec<u8>, f32) {        
+    fn set_font_conf(belt: &BELTS) -> (Vec<u8>, f32) {
         let font_name = b"Calibri".to_vec();
-        
+
         let font_size = match belt {
-            BELTS::AMARILLO => { 11.0f32 },
-            BELTS::NARANJA => { 11.0f32 },
-            BELTS::MORADO => { 11.0f32 },
-            BELTS::AZUL => { 11.0f32 },
-            BELTS::VERDE => { 9.0f32 },
-            BELTS::CAFE => { 8.5f32 },
-            BELTS::CAFE1 => { 8.5f32 },
-            BELTS::CAFE2 => { 8.5f32 },
-            BELTS::CAFE3 => { 8.5f32 }
+            BELTS::AMARILLO => 11.0f32,
+            BELTS::NARANJA => 11.0f32,
+            BELTS::MORADO => 11.0f32,
+            BELTS::AZUL => 11.0f32,
+            BELTS::VERDE => 9.0f32,
+            BELTS::CAFE => 8.5f32,
+            BELTS::CAFE1 => 8.5f32,
+            BELTS::CAFE2 => 8.5f32,
+            BELTS::CAFE3 => 8.5f32,
         };
-        
+
         (font_name, font_size)
     }
 

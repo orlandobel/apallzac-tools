@@ -1,46 +1,50 @@
-use std::collections::HashMap;
 use acroform::{AcroFormDocument, FieldValue};
-use lopdf::{Document, Object, content::{Content, Operation}};
 use field_render::FieldRender;
-
-use crate::belt_promotion_exam::{
-    candidate::Candidate,
-    belts::BELTS
+use lopdf::{
+    content::{Content, Operation},
+    Document, Object,
 };
+use std::collections::HashMap;
+
+use crate::belt_promotion_exam::{belts::BELTS, candidate::Candidate};
 
 mod field_render;
 
 pub struct ExamController {
     date: String,
     base_path: String,
-    exams_pdf: Document
+    exams_pdf: Document,
 }
 
 impl ExamController {
-    pub fn new(date: &str) -> Self{
+    pub fn new(date: &str) -> Self {
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
         let base_path = format!("{}/templates", manifest_dir);
 
         // Create a new empty PDF document for combining exams
         let combined_pdf = Document::with_version("1.4");
 
-        ExamController { 
+        ExamController {
             date: date.to_string(),
             base_path,
-            exams_pdf: combined_pdf
+            exams_pdf: combined_pdf,
         }
     }
 
-    pub fn create_exam_page(&mut self, candidate: &Candidate, file: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn create_exam_page(
+        &mut self,
+        candidate: &Candidate,
+        file: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let template_path = format!("{}/{}", self.base_path, file);
         let output_path = std::env::temp_dir()
             .join(format!(
-            "exam_output_{}_{}.pdf",
-            candidate.name.replace(' ', "_"),
-            std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_millis())
-                .unwrap_or(0)
+                "exam_output_{}_{}.pdf",
+                candidate.name.replace(' ', "_"),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis())
+                    .unwrap_or(0)
             ))
             .to_string_lossy()
             .into_owned();
@@ -50,20 +54,26 @@ impl ExamController {
         let mut values: HashMap<String, FieldValue> = HashMap::new();
         values.insert("date".to_string(), FieldValue::Text(self.date.clone()));
         values.insert("name".to_string(), FieldValue::Text(candidate.name.clone()));
-        values.insert("belt_size".to_string(), FieldValue::Text(candidate.belt_size.clone()));
-        values.insert("trainer".to_string(), FieldValue::Text(candidate.trainer.clone()));
+        values.insert(
+            "belt_size".to_string(),
+            FieldValue::Text(candidate.belt_size.clone()),
+        );
+        values.insert(
+            "trainer".to_string(),
+            FieldValue::Text(candidate.trainer.clone()),
+        );
 
-        template.fill_and_save(values, &output_path)
-        .map_err(|e| {
+        template.fill_and_save(values, &output_path).map_err(|e| {
             println!("Error saving document: {:?}", e.to_string());
             Box::new(e) as Box<dyn std::error::Error + 'static>
         })?;
 
         self.flatten_document(&output_path, &candidate.belt)
-        .map_err(|e| {
-            println!("Error flattening document: {:?}", e.to_string());
-            Box::new(e)
-        }).unwrap();
+            .map_err(|e| {
+                println!("Error flattening document: {:?}", e.to_string());
+                Box::new(e)
+            })
+            .unwrap();
 
         // Merge with combined exams file
         self.merge_documents(&output_path)?;
@@ -77,7 +87,7 @@ impl ExamController {
 
     pub fn get_exams_as_base64(&mut self) -> Result<String, Box<dyn std::error::Error>> {
         use base64::engine::{general_purpose, Engine};
-        
+
         //let temp_path = std::env::temp_dir().join("exams.pdf").to_string_lossy().into_owned();
         //self.exams_pdf.save(&temp_path)?;
 
@@ -85,18 +95,21 @@ impl ExamController {
         let mut buffer: Vec<u8> = Vec::new();
         self.exams_pdf.save_to(&mut buffer)?;
         let base64 = general_purpose::STANDARD.encode(&buffer);
-        
+
         Ok(base64)
     }
-    
+
     fn flatten_document(&self, path: &str, belt: &BELTS) -> Result<(), Box<dyn std::error::Error>> {
         let mut document = Document::load(path)?;
 
         // --- Fase 1: recolectar datos (préstamos inmutables) ---
 
         let catalog_id = document.trailer.get(b"Root")?.as_reference()?;
-        let _form_id = document.get_object(catalog_id)?.as_dict()?
-            .get(b"AcroForm")?.as_reference()?;
+        let _form_id = document
+            .get_object(catalog_id)?
+            .as_dict()?
+            .get(b"AcroForm")?
+            .as_reference()?;
 
         // Página única del PDF
         let page_id = *document
@@ -128,7 +141,8 @@ impl ExamController {
         };
 
         // Datos de renderizado por widget
-       let render_data: Vec<FieldRender> = FieldRender::from_annot_ids(&annot_ids, &document, belt)?;
+        let render_data: Vec<FieldRender> =
+            FieldRender::from_annot_ids(&annot_ids, &document, belt)?;
 
         // --- Fase 2: construir stream de contenido con el texto plano ---
         let mut operations: Vec<Operation> = Vec::new();
@@ -139,21 +153,28 @@ impl ExamController {
             operations.push(Operation::new("g", vec![Object::Real(0.0)]));
 
             // Fuente y tamaño
-            operations.push(Operation::new("Tf", vec![
-                Object::Name(rd.font_name().clone()),
-                Object::Real(rd.font_size()),
-            ]));
+            operations.push(Operation::new(
+                "Tf",
+                vec![
+                    Object::Name(rd.font_name().clone()),
+                    Object::Real(rd.font_size()),
+                ],
+            ));
 
             // Mover al origen del campo
-            operations.push(Operation::new("Td", vec![
-                Object::Real(rd.x()),
-                Object::Real(rd.y()),
-            ]));
+            operations.push(Operation::new(
+                "Td",
+                vec![Object::Real(rd.x()), Object::Real(rd.y())],
+            ));
 
             // Imprimir texto
-            operations.push(Operation::new("Tj", vec![
-                Object::String(rd.text_bytes().clone(), lopdf::StringFormat::Literal),
-            ]));
+            operations.push(Operation::new(
+                "Tj",
+                vec![Object::String(
+                    rd.text_bytes().clone(),
+                    lopdf::StringFormat::Literal,
+                )],
+            ));
 
             operations.push(Operation::new("ET", vec![]));
         }
@@ -163,7 +184,10 @@ impl ExamController {
 
         // --- Fase 4: eliminar anotaciones de widget y el AcroForm ---
 
-        document.get_object_mut(page_id).and_then(Object::as_dict_mut)?.remove(b"Annots");
+        document
+            .get_object_mut(page_id)
+            .and_then(Object::as_dict_mut)?
+            .remove(b"Annots");
         document.catalog_mut()?.remove(b"AcroForm");
 
         document.save(path)?;
@@ -176,7 +200,10 @@ impl ExamController {
         if self.exams_pdf.get_pages().is_empty() {
             self.exams_pdf = temp_doc;
         } else {
-            let current_temp_path = std::env::temp_dir().join("current_exam.pdf").to_string_lossy().into_owned();
+            let current_temp_path = std::env::temp_dir()
+                .join("current_exam.pdf")
+                .to_string_lossy()
+                .into_owned();
             self.exams_pdf.save(&current_temp_path)?;
 
             let doc1 = Document::load(&current_temp_path)?;
@@ -204,13 +231,17 @@ impl ExamController {
             // exist in merged_doc, causing pages to appear blank.
             for new_id in doc1_id_map.values().cloned().collect::<Vec<_>>() {
                 if let Some(obj) = merged_doc.objects.remove(&new_id) {
-                    merged_doc.objects.insert(new_id, remap_references(obj, &doc1_id_map));
+                    merged_doc
+                        .objects
+                        .insert(new_id, remap_references(obj, &doc1_id_map));
                 }
             }
 
             for new_id in doc2_id_map.values().cloned().collect::<Vec<_>>() {
                 if let Some(obj) = merged_doc.objects.remove(&new_id) {
-                    merged_doc.objects.insert(new_id, remap_references(obj, &doc2_id_map));
+                    merged_doc
+                        .objects
+                        .insert(new_id, remap_references(obj, &doc2_id_map));
                 }
             }
 
@@ -234,8 +265,13 @@ impl ExamController {
             let mut pages_dict = lopdf::Dictionary::new();
             pages_dict.set(b"Type", Object::Name(b"Pages".to_vec()));
             pages_dict.set(b"Count", Object::Integer(all_pages.len() as i64));
-            pages_dict.set(b"Kids", Object::Array(all_pages.iter().map(|&id| Object::Reference(id)).collect()));
-            merged_doc.objects.insert(pages_root_id, Object::Dictionary(pages_dict));
+            pages_dict.set(
+                b"Kids",
+                Object::Array(all_pages.iter().map(|&id| Object::Reference(id)).collect()),
+            );
+            merged_doc
+                .objects
+                .insert(pages_root_id, Object::Dictionary(pages_dict));
 
             for page_ref in &all_pages {
                 if let Some(page_obj) = merged_doc.objects.get_mut(page_ref) {
@@ -249,10 +285,16 @@ impl ExamController {
             let mut catalog_dict = lopdf::Dictionary::new();
             catalog_dict.set(b"Type", Object::Name(b"Catalog".to_vec()));
             catalog_dict.set(b"Pages", Object::Reference(pages_root_id));
-            merged_doc.objects.insert(catalog_id, Object::Dictionary(catalog_dict));
+            merged_doc
+                .objects
+                .insert(catalog_id, Object::Dictionary(catalog_dict));
 
-            merged_doc.trailer.set(b"Root", Object::Reference(catalog_id));
-            merged_doc.trailer.set(b"Size", Object::Integer(merged_doc.objects.len() as i64));
+            merged_doc
+                .trailer
+                .set(b"Root", Object::Reference(catalog_id));
+            merged_doc
+                .trailer
+                .set(b"Size", Object::Integer(merged_doc.objects.len() as i64));
 
             self.exams_pdf = merged_doc;
 
@@ -261,7 +303,6 @@ impl ExamController {
 
         Ok(())
     }
-  
 }
 
 /// Recursively walks an [`Object`] and replaces every [`Object::Reference`] whose
@@ -273,7 +314,9 @@ fn remap_references(obj: Object, id_map: &HashMap<lopdf::ObjectId, lopdf::Object
     match obj {
         Object::Reference(id) => Object::Reference(*id_map.get(&id).unwrap_or(&id)),
         Object::Array(arr) => Object::Array(
-            arr.into_iter().map(|o| remap_references(o, id_map)).collect(),
+            arr.into_iter()
+                .map(|o| remap_references(o, id_map))
+                .collect(),
         ),
         Object::Dictionary(dict) => {
             let mut new_dict = lopdf::Dictionary::new();
@@ -306,7 +349,7 @@ mod exam_controller_test {
             name: "John Doe".to_string(),
             trainer: "Jane Smith".to_string(),
             belt: BELTS::AMARILLO,
-            belt_size: "CH".to_string()
+            belt_size: "CH".to_string(),
         };
 
         let result = controller.create_exam_page(&candidate, "yellow.pdf");
@@ -325,20 +368,24 @@ mod exam_controller_test {
                 name: "John Doe".to_string(),
                 trainer: "Jane Smith".to_string(),
                 belt: BELTS::AMARILLO,
-                belt_size: "CH".to_string()
+                belt_size: "CH".to_string(),
             },
             Candidate {
                 school: Some("Some School".to_string()),
                 name: "Jane Doe".to_string(),
                 trainer: "John Smith".to_string(),
                 belt: BELTS::CAFE1,
-                belt_size: "CH".to_string()
-            }
+                belt_size: "CH".to_string(),
+            },
         ];
 
-        controller.create_exam_page(&candidates[0], "yellow.pdf").unwrap();
-        controller.create_exam_page(&candidates[1], "brown1.pdf").unwrap();
-        
+        controller
+            .create_exam_page(&candidates[0], "yellow.pdf")
+            .unwrap();
+        controller
+            .create_exam_page(&candidates[1], "brown1.pdf")
+            .unwrap();
+
         assert!(true);
     }
 
@@ -351,28 +398,34 @@ mod exam_controller_test {
                 name: "John Doe".to_string(),
                 trainer: "Jane Smith".to_string(),
                 belt: BELTS::AMARILLO,
-                belt_size: "CH".to_string()
+                belt_size: "CH".to_string(),
             },
             Candidate {
                 school: Some("Some School".to_string()),
                 name: "Jane Doe".to_string(),
                 trainer: "John Smith".to_string(),
                 belt: BELTS::CAFE1,
-                belt_size: "CH".to_string()
+                belt_size: "CH".to_string(),
             },
             Candidate {
                 school: Some("Some School".to_string()),
                 name: "John Doe".to_string(),
                 trainer: "Jane Smith".to_string(),
                 belt: BELTS::VERDE,
-                belt_size: "CH".to_string()
-            }
+                belt_size: "CH".to_string(),
+            },
         ];
 
-        controller.create_exam_page(&candidates[0], "yellow.pdf").unwrap();
-        controller.create_exam_page(&candidates[1], "brown1.pdf").unwrap();
-        controller.create_exam_page(&candidates[2], "green.pdf").unwrap();
-        
+        controller
+            .create_exam_page(&candidates[0], "yellow.pdf")
+            .unwrap();
+        controller
+            .create_exam_page(&candidates[1], "brown1.pdf")
+            .unwrap();
+        controller
+            .create_exam_page(&candidates[2], "green.pdf")
+            .unwrap();
+
         assert!(true);
     }
 
@@ -382,7 +435,9 @@ mod exam_controller_test {
         let candidates = generate_candidates(100);
 
         for candidate in candidates {
-            controller.create_exam_page(&candidate, "yellow.pdf").unwrap();
+            controller
+                .create_exam_page(&candidate, "yellow.pdf")
+                .unwrap();
         }
 
         let base64 = controller.get_exams_as_base64().unwrap();
@@ -391,14 +446,14 @@ mod exam_controller_test {
 
     fn generate_candidates(count: usize) -> Vec<Candidate> {
         let mut candidates: Vec<Candidate> = Vec::new();
-        
+
         for i in 0..count {
             candidates.push(Candidate {
                 school: Some("Some School".to_string()),
                 name: format!("candidate_{}", i).to_string(),
                 trainer: "Some trainer".to_string(),
                 belt: BELTS::AMARILLO,
-                belt_size: "CH".to_string()
+                belt_size: "CH".to_string(),
             });
         }
 

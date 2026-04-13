@@ -23,7 +23,7 @@ const headers = [
 ]
 
 const data = ref<Candidate[]>([])
-const date = ref<string | null>(null)
+const date = ref<string | undefined>(undefined)
 const error = ref<string>("")
 const show_snack = ref<boolean>(false)
 const generating = ref<boolean>(false)
@@ -134,7 +134,7 @@ onMounted(() => {
 					</v-tabs-window-item>
 
 					<v-tabs-window-item value="previsualizacion" class="relative">
-						<previewer />
+						<previewer :date="date" />
 					</v-tabs-window-item>
 				</v-tabs-window>
 			</section>

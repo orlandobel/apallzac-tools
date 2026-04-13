@@ -5,8 +5,15 @@ import { listen } from '@tauri-apps/api/event';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
 import { invoke } from '@tauri-apps/api/core';
+import { save } from '@tauri-apps/plugin-dialog';
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+const props = defineProps<{
+    date?: string
+}>();
+
+const has_saved = ref<boolean>(false)
 
 const canvasRefs = ref<HTMLCanvasElement[]>([]);
 const pdf = ref<string>('');
@@ -26,8 +33,27 @@ const zoomOut = () => {
   	zoomLevel.value /= 1.2;
 };
 
-const save = () => {
-  	console.log('TODO :: implement functionality');
+const saveFile = async () => {
+	const formattedDate = new Date(props.date ?? '').toLocaleDateString('es-ES', {
+		day: '2-digit',
+		month: '2-digit',
+		year: 'numeric'
+	}).replace(/\//g, '-');
+
+	const file_name = `Examenes ${formattedDate}.pdf`
+	const documents_path = await invoke<string>('get_documents_dir')
+
+	console.log(file_name)
+	console.log(documents_path)
+	
+  	const save_path = await save({
+		title: "Guardar en",
+		defaultPath: `${documents_path}/${file_name}`
+	})
+
+	invoke('save_file', { path: save_path, file: pdf.value }).then(() => {
+		has_saved.value = true;
+	});
 };
 
 const print = () => {
@@ -105,12 +131,14 @@ onMounted(() => {
 			</div>
 
 			<div class="flex gap-2 p-4">
-				<v-btn variant="text" icon="mdi-content-save" :disabled="!btn_enabled" @click="save" />
+				<v-btn variant="text" icon="mdi-content-save" :disabled="!btn_enabled" @click="saveFile" />
 				<v-btn variant="text" icon="mdi-printer" :disabled="!btn_enabled" @click="print" />
 			</div>
 		</div>
 		
 		<div v-if="pdf" class="flex flex-col items-center gap-4 mt-4">
+
+			<v-snackbar color="success" location="top end" text="Documento guardado" :timeout="3000" contained v-model="has_saved"/>
 			<div v-for="index in totalPages" :key="index" class="relative">
 				<canvas 
 					:ref="(el) => { if (el) canvasRefs[index - 1] = el as HTMLCanvasElement }" 

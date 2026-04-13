@@ -1,5 +1,5 @@
 use controllers::Controllers;
 
-pub mod controllers; 
+pub mod controllers;
 
-pub struct AppState ( pub Controllers );
+pub struct AppState(pub Controllers);

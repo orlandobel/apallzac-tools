@@ -1,7 +1,7 @@
 use tauri::Emitter;
 
-use super::candidate::Candidate;
 use super::belts::BELTS;
+use super::candidate::Candidate;
 use crate::exam_controller::ExamController;
 use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook};
 
@@ -41,10 +41,14 @@ impl BeltPromotionExamController {
         Ok(self.candidates.clone())
     }
 
-    pub fn generate_exams(&mut self, date: &str, handler: tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn generate_exams(
+        &mut self,
+        date: &str,
+        handler: tauri::AppHandle,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let candidates = self.candidates.clone();
         let mut exam_controller = ExamController::new(date);
-        
+
         let mut sorted_candidates = candidates.into_iter().collect::<Vec<Candidate>>();
         sorted_candidates.sort_by(|a, b| a.belt.cmp(&b.belt));
 
@@ -65,11 +69,11 @@ impl BeltPromotionExamController {
             exam_controller.create_exam_page(&candidate, exam)?;
             handler.emit("current-progress", ())?;
         }
-        
+
         let exams = exam_controller.get_exams_as_base64()?;
 
         handler.emit("document-created", &exams)?;
-        
+
         self.exam = Some(exams);
         Ok(())
     }
@@ -78,12 +82,10 @@ impl BeltPromotionExamController {
         self.candidates.clone()
     }
 
-
     pub fn get_existing_document(&self) -> Option<String> {
         self.exam.clone()
     }
 }
-
 
 #[cfg(test)]
 mod tests {

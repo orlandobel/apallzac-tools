@@ -2,5 +2,5 @@ use crate::belt_promotion_exam::belt_promotion_exam_controller::BeltPromotionExa
 
 pub enum Controllers {
     BPEController(BeltPromotionExamController),
-    None
+    None,
 }

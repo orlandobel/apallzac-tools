@@ -1,16 +1,17 @@
-use std::sync::Mutex;
-use belt_promotion_exam::commands as bpe_commands;
 use app_state::AppState;
+use belt_promotion_exam::commands as bpe_commands;
+use std::sync::Mutex;
 
-mod belt_promotion_exam;
-mod excel_reader;
 mod app_state;
+mod belt_promotion_exam;
 mod exam_controller;
+mod excel_reader;
+mod system_utils;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let state = AppState (app_state::controllers::Controllers::None);
-    
+    let state = AppState(app_state::controllers::Controllers::None);
+
     tauri::Builder::default()
         .manage(Mutex::new(state))
         .plugin(tauri_plugin_dialog::init())
@@ -20,6 +21,8 @@ pub fn run() {
             bpe_commands::generate_exams,
             bpe_commands::get_loaded_candidates,
             bpe_commands::get_existing_document,
+            system_utils::get_documents_dir,
+            system_utils::save_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
