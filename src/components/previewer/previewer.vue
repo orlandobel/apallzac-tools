@@ -5,7 +5,7 @@ import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
-import printerConfiguration from '@/components/printer-configuration/printer-configuration.vue';
+import PrintBtn from '@/components/print-btn/print-btn.vue';
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -54,10 +54,6 @@ const saveFile = async () => {
 	invoke('save_file', { path: save_path, file: pdf.value }).then(() => {
 		has_saved.value = true;
 	});
-};
-
-const print = () => {
-  	console.log('TODO :: implement functionality');
 };
 /* End toolbar functions */
 
@@ -118,7 +114,7 @@ onMounted(() => {
 
 <template>
 	<section class="flex flex-col items-center justify-center">
-		<printer-configuration :base64="pdf" />
+		
 		<div class="w-full bg-gray-700 flex justify-between items-center z-10 px-4 py-0 h-[50px] sticky top-0">
 			<!-- Page count display -->
 			<div class="text-sm text-white">
@@ -133,7 +129,7 @@ onMounted(() => {
 
 			<div class="flex gap-2 p-4">
 				<v-btn variant="text" icon="mdi-content-save" :disabled="!btn_enabled" @click="saveFile" />
-				<v-btn variant="text" icon="mdi-printer" :disabled="!btn_enabled" @click="print" />
+				<print-btn :base64="pdf" />
 			</div>
 		</div>
 		

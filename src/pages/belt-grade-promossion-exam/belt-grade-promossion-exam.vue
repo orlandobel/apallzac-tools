@@ -101,15 +101,15 @@ onMounted(() => {
 					<v-tab value="previsualizacion">Previsualización</v-tab>
 				</v-tabs>
 
-				<div class="flex items-center justify-center gap-2 sm:gap-4 w-full sm:w-xs mx-2 sm:mx-4 px-2 sm:px-4 border-l-1 border-l-gray-500 flex-wrap">
-					<div class="flex-1 min-w-[200px] justify-center items-center">
-						<v-date-input prepend-icon="" variant="solo-filled" class="h-[40px] w-full" input-format="d/m/Y"
+				<div class="flex items-center justify-center gap-4 w-xs mx-4 px-4 border-l-1 border-l-gray-500">
+					<div class="flex flex-1 justify-center items-center">
+						<v-date-input prepend-icon="" variant="solo-filled" class="h-[40px]" input-format="d/m/Y"
 							v-model="date" />
 					</div>
 
-					<div class="flex-1 min-w-[140px]">
+					<div class="flex-1">
 						<label for="file" class="block w-full rounded-lg border-none 
-							bg-accent px-3 py-2 text-center text-text cursor-pointer h-[40px] flex items-center justify-center text-sm sm:text-base">
+							bg-accent px-3 py-2 text-center text-text cursor-pointer h-[40px] flex items-center justify-center">
 							Elegir archivo
 						</label>
 
