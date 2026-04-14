@@ -8,6 +8,8 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "dialog:default"
+    "dialog:default",
+    "printer-wkhtml-bin:allow-get-printers",
+    "printer-wkhtml-bin:allow-print-pdf"
   ]
 }

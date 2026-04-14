@@ -1,10 +1,15 @@
 <script lang="ts" setup>
-import { onMounted, useTemplateRef } from 'vue';
+import { onMounted, ref, useTemplateRef } from 'vue';
+import { getPrinters } from 'tauri-plugin-printer-wkhtml-bin'
 
 const printer_config = useTemplateRef("printer_config")
 
-onMounted(() => {
+const printers = ref<any[]>([])
+const selectedPrinter = ref<Object | undefined>(undefined)
+
+onMounted(async () => {
     printer_config.value?.showModal()
+    printers.value = JSON.parse(await getPrinters())
 })
 </script>
 
@@ -37,15 +42,24 @@ onMounted(() => {
                 <!-- Destino -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Destino</label>
-                    <select class="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
-                        <option value="">Impresora 1</option>
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md max-w-s-35 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary"
+                        v-model="selectedPrinter"
+                    >
+                        <option 
+                            class="bg-gray-700 text-gray-200 hover:bg-gray-600"
+                            v-for="(printer, index) in printers" 
+                            :key="index" 
+                            :value="printer"
+                        >
+                            {{ printer.Name }}
+                        </option>
                     </select>
                 </span>
 
                 <!-- Páginas -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Páginas</label>
-                    <select class="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
                         <option value="all">Todas</option>
                         <option value="current">Página actual</option>
                         <option value="custom">Personalizado</option>
@@ -62,7 +76,7 @@ onMounted(() => {
                 <!-- Color -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Color</label>
-                    <select class="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
                         <option value="bw">Blanco y negro</option>
                         <option value="color" selected>Color</option>
                     </select>
@@ -71,7 +85,7 @@ onMounted(() => {
                 <!-- Tamaño de papel -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Tamaño de papel</label>
-                    <select class="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
                         <option value="letter">Carta (Letter)</option>
                         <option value="a4">A4</option>
                         <option value="legal">Legal</option>
@@ -83,7 +97,7 @@ onMounted(() => {
                 <!-- Márgenes -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Márgenes</label>
-                    <select class="flex-1 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
                         <option value="default">Predeterminados</option>
                         <option value="none">Sin márgenes</option>
                         <option value="minimum">Mínimos</option>

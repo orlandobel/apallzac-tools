@@ -1,6 +1,8 @@
+use std::sync::Mutex;
+use tauri_plugin_printer_wkhtml_bin;
+
 use app_state::AppState;
 use belt_promotion_exam::commands as bpe_commands;
-use std::sync::Mutex;
 
 mod app_state;
 mod belt_promotion_exam;
@@ -16,6 +18,7 @@ pub fn run() {
         .manage(Mutex::new(state))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_printer_wkhtml_bin::init())
         .invoke_handler(tauri::generate_handler![
             bpe_commands::load_data_of_file,
             bpe_commands::generate_exams,

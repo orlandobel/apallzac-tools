@@ -81,6 +81,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tauri-plugin-printer-wkhtml-bin",
  "unicode-normalization",
 ]
 
@@ -4244,6 +4245,20 @@ dependencies = [
  "url",
  "windows",
  "zbus",
+]
+
+[[package]]
+name = "tauri-plugin-printer-wkhtml-bin"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "59eaff499bc5b77c90a4f93f8a7f651b0d3c352b04c0065a7ebd5072496be802"
+dependencies = [
+ "base64 0.22.1",
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "tempfile",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

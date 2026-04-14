@@ -1,11 +1,11 @@
 <script setup lang="ts">
-// https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf
 import { computed, onMounted, ref, watch } from 'vue';
 import { listen } from '@tauri-apps/api/event';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?url';
 import { invoke } from '@tauri-apps/api/core';
 import { save } from '@tauri-apps/plugin-dialog';
+import printerConfiguration from '@/components/printer-configuration/printer-configuration.vue';
 
 GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
@@ -118,6 +118,7 @@ onMounted(() => {
 
 <template>
 	<section class="flex flex-col items-center justify-center">
+		<printer-configuration />
 		<div class="w-full bg-gray-700 flex justify-between items-center z-10 px-4 py-0 h-[50px] sticky top-0">
 			<!-- Page count display -->
 			<div class="text-sm text-white">
