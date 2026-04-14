@@ -15,6 +15,7 @@ pub fn run() {
     let state = AppState(app_state::controllers::Controllers::None);
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .manage(Mutex::new(state))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())

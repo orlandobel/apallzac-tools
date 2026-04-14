@@ -1,15 +1,74 @@
 <script lang="ts" setup>
-import { onMounted, ref, useTemplateRef } from 'vue';
-import { getPrinters } from 'tauri-plugin-printer-wkhtml-bin'
+import { onMounted, ref, useTemplateRef } from 'vue'
+import { getPrinters, printPdf } from 'tauri-plugin-printer-wkhtml-bin'
+import { writeFile, remove} from '@tauri-apps/plugin-fs'
+import { tempDir, join } from '@tauri-apps/api/path'
+
+const props = defineProps({
+    base64: {
+        type: String,
+        required: true
+    }
+})
 
 const printer_config = useTemplateRef("printer_config")
 
 const printers = ref<any[]>([])
-const selectedPrinter = ref<Object | undefined>(undefined)
+const selected_printer = ref<any>()
+const copies = ref<number>(1)
+const color = ref<boolean>(true)
+const page_size = ref<string>("letter")
+
+const printDocument = async () => {
+    const printer_settings = selected_printer.value?.Name
+    
+    // Generate unique temporary filename and full path
+    const tempFileName = `temp_print_${Date.now()}.pdf`
+    const tempDirPath = await tempDir()
+    const fullTempPath = await join(tempDirPath, tempFileName)
+    
+    try {
+        // Convert base64 to Uint8Array and write to temporary file
+        const base64Data = props.base64.replace(/^data:application\/pdf;base64,/, '')
+        const binaryData = atob(base64Data)
+        const bytes = new Uint8Array(binaryData.length)
+        for (let i = 0; i < binaryData.length; i++) {
+            bytes[i] = binaryData.charCodeAt(i)
+        }
+        
+        await writeFile(fullTempPath, bytes)
+        
+        const print_settings = {
+            id: selected_printer.value.DriverName,
+            path: fullTempPath,
+            printer_setting: printer_settings,
+            remove_after_print: false // We'll handle cleanup ourselves
+        }
+
+        console.log(selected_printer.value)
+        console.log(print_settings)
+        // Print the temporary file
+        const result = await printPdf(print_settings)
+        console.log("Print result:")
+        console.log(result)
+        
+        console.log("Printed successfully")
+    } catch (error) {
+        console.error("Print failed", error)
+    } finally {
+        // Always clean up the temporary file
+        try {
+            await remove(fullTempPath)
+        } catch (cleanupError) {
+            console.error("Failed to cleanup temporary file", cleanupError)
+        }
+    }
+}
 
 onMounted(async () => {
     printer_config.value?.showModal()
     printers.value = JSON.parse(await getPrinters())
+    selected_printer.value = printers.value[0]
 })
 </script>
 
@@ -43,7 +102,7 @@ onMounted(async () => {
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Destino</label>
                     <select class="flex-1 bg-gray-700 border border-white/10 rounded-md max-w-s-35 px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary"
-                        v-model="selectedPrinter"
+                        v-model="selected_printer"
                     >
                         <option 
                             class="bg-gray-700 text-gray-200 hover:bg-gray-600"
@@ -69,39 +128,28 @@ onMounted(async () => {
                 <!-- Copias -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Copias</label>
-                    <input type="number" value="1" min="1"
+                    <input type="number" value="1" min="1" v-model="copies"
                         class="aspect-square bg-white/5 border border-white/10 rounded-md max-h-10 p-2 text-sm text-gray-200 text-center focus:outline-none focus:border-primary" />
                 </span>
 
                 <!-- Color -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Color</label>
-                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
-                        <option value="bw">Blanco y negro</option>
-                        <option value="color" selected>Color</option>
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary" v-model="color">
+                        <option :value="false">Blanco y negro</option>
+                        <option :value="true" selected>Color</option>
                     </select>
                 </span>
 
                 <!-- Tamaño de papel -->
                 <span class="flex items-center gap-3">
                     <label class="flex-1 text-sm text-gray-200">Tamaño de papel</label>
-                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
-                        <option value="letter">Carta (Letter)</option>
+                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary" v-model="page_size">
+                        <option value="letter">Carta</option>
                         <option value="a4">A4</option>
                         <option value="legal">Legal</option>
                         <option value="a3">A3</option>
                         <option value="b5">B5</option>
-                    </select>
-                </span>
-
-                <!-- Márgenes -->
-                <span class="flex items-center gap-3">
-                    <label class="flex-1 text-sm text-gray-200">Márgenes</label>
-                    <select class="flex-1 bg-gray-700 border border-white/10 rounded-md px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-primary">
-                        <option value="default">Predeterminados</option>
-                        <option value="none">Sin márgenes</option>
-                        <option value="minimum">Mínimos</option>
-                        <option value="custom">Personalizados</option>
                     </select>
                 </span>
             </div>
@@ -111,7 +159,9 @@ onMounted(async () => {
                 <button class="px-4 py-2 text-sm text-gray-300 rounded-md hover:bg-white/10 transition-colors">
                     Cancelar
                 </button>
-                <button class="px-5 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+                <button class="px-5 py-2 text-sm font-medium bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+                    @click="printDocument"
+                >
                     Imprimir
                 </button>
             </div>

@@ -118,7 +118,7 @@ onMounted(() => {
 
 <template>
 	<section class="flex flex-col items-center justify-center">
-		<printer-configuration />
+		<printer-configuration :base64="pdf" />
 		<div class="w-full bg-gray-700 flex justify-between items-center z-10 px-4 py-0 h-[50px] sticky top-0">
 			<!-- Page count display -->
 			<div class="text-sm text-white">

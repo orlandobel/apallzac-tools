@@ -29,4 +29,5 @@ acroform = "0.1.3"
 lopdf = "0.40.0"
 base64 = "0.22.1"
 tauri-plugin-printer-wkhtml-bin = "0.1.4"
+tauri-plugin-fs = "2"
 
