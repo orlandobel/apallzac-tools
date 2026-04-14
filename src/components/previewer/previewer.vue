@@ -129,7 +129,7 @@ onMounted(() => {
 
 			<div class="flex gap-2 p-4">
 				<v-btn variant="text" icon="mdi-content-save" :disabled="!btn_enabled" @click="saveFile" />
-				<print-btn :base64="pdf" />
+				<print-btn :base64="pdf" :disabled="!btn_enabled" />
 			</div>
 		</div>
 		

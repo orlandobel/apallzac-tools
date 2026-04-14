@@ -79,7 +79,7 @@ onMounted(async () => {
 <template>
     <v-menu>
         <template v-slot:activator="{ props }">
-            <v-btn variant="text" icon="mdi-printer" v-bind="props" />
+            <v-btn variant="text" icon="mdi-printer" v-bind="props" :disabled="disabled" />
       </template>
 
       <v-list>
