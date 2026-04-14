@@ -14,8 +14,15 @@ pub fn load_data_of_file(
         .lock()
         .map_err(|e| format!("Failed to acquire app state lock: {}", e))?;
 
+    if path.is_empty() {
+        return Ok(Vec::new());
+    }
+
     match &mut app.0 {
-        Controllers::BPEController(controller) => controller.load_data().map_err(|e| e.to_string()),
+        Controllers::BPEController(controller) => {
+            controller.replace_workbook(path).map_err(|e| e.to_string())?;
+            controller.load_data().map_err(|e| e.to_string())
+        },
         Controllers::None => {
             let mut controller =
                 BeltPromotionExamController::new(path).map_err(|e| e.to_string())?;

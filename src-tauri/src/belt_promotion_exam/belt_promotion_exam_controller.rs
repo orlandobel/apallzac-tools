@@ -29,6 +29,13 @@ impl BeltPromotionExamController {
         })
     }
 
+    pub fn replace_workbook(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        self.workbook = Workbook::new(path.to_string())?;
+        self.col_config = BeltPromotionConfiguration::new(&self.workbook.get_sheet()?.next().unwrap()?)?;
+        self.candidates.clear();
+        Ok(())
+    }
+
     pub fn load_data(&mut self) -> Result<Vec<Candidate>, Box<dyn std::error::Error>> {
         let sheet = self.workbook.get_sheet()?;
 

@@ -42,6 +42,8 @@ const open_file = async (event: Event) => {
 		}]
 	})
 
+	if (!path) return
+
 	try {
 		data.value = await invoke('load_data_of_file', { path })
 		console.log(data)
