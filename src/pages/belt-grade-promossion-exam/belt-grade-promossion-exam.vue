@@ -42,8 +42,13 @@ const open_file = async (event: Event) => {
 		}]
 	})
 
-	data.value = await invoke('load_data_of_file', { path })
-	console.log(data)
+	try {
+		data.value = await invoke('load_data_of_file', { path })
+		console.log(data)
+	} catch(err) {
+		error.value = err as string
+		show_snack.value = true
+	}
 }
 
 const generateExams = () => {
