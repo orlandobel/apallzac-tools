@@ -4,11 +4,11 @@ use tauri_plugin_printer_wkhtml_bin;
 use app_state::AppState;
 use belt_promotion_exam::commands as bpe_commands;
 
-mod app_state;
-mod belt_promotion_exam;
-mod exam_controller;
-mod excel_reader;
-mod system_utils;
+pub mod app_state;
+pub mod belt_promotion_exam;
+pub mod exam_controller;
+pub mod excel_reader;
+pub mod system_utils;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

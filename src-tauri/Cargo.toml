@@ -31,3 +31,10 @@ base64 = "0.22.1"
 tauri-plugin-printer-wkhtml-bin = "0.1.4"
 tauri-plugin-fs = "2"
 
+[dev-dependencies]
+criterion = { version = "0.8.2", features = ["html_reports"] }
+
+[[bench]]
+name = "exam_controller_bench"
+harness = false
+
