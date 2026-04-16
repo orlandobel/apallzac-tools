@@ -51,7 +51,7 @@ impl ExamController {
 
         let mut template = AcroFormDocument::from_pdf(template_path).expect("error opening file");
 
-        let mut values: HashMap<String, FieldValue> = HashMap::new();
+        let mut values: HashMap<String, FieldValue> = HashMap::with_capacity(4);
         values.insert("date".to_string(), FieldValue::Text(self.date.clone()));
         values.insert("name".to_string(), FieldValue::Text(candidate.name.clone()));
         values.insert(
@@ -78,10 +78,8 @@ impl ExamController {
         // Merge with combined exams file
         self.merge_documents(&output_path)?;
 
-        // Delete temporary file
-        if std::path::Path::new(&output_path).exists() {
-            std::fs::remove_file(&output_path)?;
-        }
+        // Delete temporary file with better error handling
+        let _ = std::fs::remove_file(&output_path); // Ignore cleanup errors
         Ok(())
     }
 
@@ -145,7 +143,8 @@ impl ExamController {
             FieldRender::from_annot_ids(&annot_ids, &document, belt)?;
 
         // --- Fase 2: construir stream de contenido con el texto plano ---
-        let mut operations: Vec<Operation> = Vec::new();
+        // Pre-allocate operations vector: each field needs 6 operations (BT, g, Tf, Td, Tj, ET)
+        let mut operations: Vec<Operation> = Vec::with_capacity(render_data.len() * 6);
         for rd in &render_data {
             operations.push(Operation::new("BT", vec![]));
 
@@ -213,13 +212,13 @@ impl ExamController {
 
             // Copy all objects and record old->new ID mappings for each source document.
             // The objects still contain references to the old IDs; we fix that below.
-            let mut doc1_id_map: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::new();
+            let mut doc1_id_map: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::with_capacity(doc1.objects.len());
             for (id, obj) in doc1.objects.iter() {
                 let new_id = merged_doc.add_object(obj.clone());
                 doc1_id_map.insert(*id, new_id);
             }
 
-            let mut doc2_id_map: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::new();
+            let mut doc2_id_map: HashMap<lopdf::ObjectId, lopdf::ObjectId> = HashMap::with_capacity(doc2.objects.len());
             for (id, obj) in doc2.objects.iter() {
                 let new_id = merged_doc.add_object(obj.clone());
                 doc2_id_map.insert(*id, new_id);
@@ -229,7 +228,9 @@ impl ExamController {
             // Without this step, /Contents, /Resources, /Font, etc. references inside
             // each page still point to the original document's object IDs, which don't
             // exist in merged_doc, causing pages to appear blank.
-            for new_id in doc1_id_map.values().cloned().collect::<Vec<_>>() {
+            // Collect IDs first to avoid borrowing issues
+            let doc1_new_ids: Vec<lopdf::ObjectId> = doc1_id_map.values().cloned().collect();
+            for new_id in doc1_new_ids {
                 if let Some(obj) = merged_doc.objects.remove(&new_id) {
                     merged_doc
                         .objects
@@ -237,7 +238,8 @@ impl ExamController {
                 }
             }
 
-            for new_id in doc2_id_map.values().cloned().collect::<Vec<_>>() {
+            let doc2_new_ids: Vec<lopdf::ObjectId> = doc2_id_map.values().cloned().collect();
+            for new_id in doc2_new_ids {
                 if let Some(obj) = merged_doc.objects.remove(&new_id) {
                     merged_doc
                         .objects
@@ -246,7 +248,10 @@ impl ExamController {
             }
 
             // Build an ordered list of all pages using the remapped IDs.
-            let mut all_pages: Vec<lopdf::ObjectId> = Vec::new();
+            // Pre-allocate with estimated capacity (sum of pages from both documents)
+            let doc1_page_count = doc1.get_pages().len();
+            let doc2_page_count = doc2.get_pages().len();
+            let mut all_pages: Vec<lopdf::ObjectId> = Vec::with_capacity(doc1_page_count + doc2_page_count);
 
             for (_page_num, page_id) in doc1.get_pages() {
                 if let Some(&new_page_id) = doc1_id_map.get(&page_id) {
@@ -296,8 +301,11 @@ impl ExamController {
                 .trailer
                 .set(b"Size", Object::Integer(merged_doc.objects.len() as i64));
 
-            self.exams_pdf = merged_doc;
+            // Clear old document to free memory before assignment
+            let old_doc = std::mem::replace(&mut self.exams_pdf, merged_doc);
+            drop(old_doc); // Explicitly drop to free memory
 
+            // Clean up temporary file
             let _ = std::fs::remove_file(&current_temp_path);
         }
 

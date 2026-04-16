@@ -26,10 +26,11 @@ impl FieldRender {
         document: &lopdf::Document,
         belt: &BELTS,
     ) -> Result<Vec<Self>, Box<dyn std::error::Error>> {
-        let mut field_renders: Vec<Self> = Vec::new();
+        // Pre-allocate with estimated capacity (not all annotations are valid widgets)
+        let mut field_renders: Vec<Self> = Vec::with_capacity(annot_ids.len() / 2);
 
         for &annot_id in annot_ids {
-            let dict = document.get_object(annot_id)?.as_dict()?.clone();
+            let dict = document.get_object(annot_id)?.as_dict()?;
 
             // Solo anotaciones de tipo Widget
             let is_widget = matches!(
@@ -63,7 +64,7 @@ impl FieldRender {
                         Ok(Object::Reference(id)) => *id,
                         _ => continue,
                     };
-                    let parent = document.get_object(parent_id)?.as_dict()?.clone();
+                    let parent = document.get_object(parent_id)?.as_dict()?;
                     match parent.get(b"V") {
                         Ok(Object::String(bytes, _)) if !bytes.is_empty() => bytes.clone(),
                         _ => continue,
@@ -99,16 +100,16 @@ impl FieldRender {
         self.y
     }
 
-    pub fn font_name(&self) -> Vec<u8> {
-        self.font_name.clone()
+    pub fn font_name(&self) -> &Vec<u8> {
+        &self.font_name
     }
 
     pub fn font_size(&self) -> f32 {
         self.font_size
     }
 
-    pub fn text_bytes(&self) -> Vec<u8> {
-        self.text_bytes.clone()
+    pub fn text_bytes(&self) -> &Vec<u8> {
+        &self.text_bytes
     }
 
     fn set_font_conf(belt: &BELTS) -> (Vec<u8>, f32) {
