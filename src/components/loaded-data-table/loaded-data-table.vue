@@ -7,6 +7,15 @@ defineProps<{
     data: Candidate[]
     onGenerateClick: () => void
 }>()
+
+const formatBelt = (belt: string): string => {
+    const beltMap: Record<string, string> = {
+        'CAFE1': 'CAFE 1ER GRADO',
+        'CAFE2': 'CAFE 2DO GRADO',
+        'CAFE3': 'CAFE 3ER GRADO'
+    };
+    return beltMap[belt] || belt;
+}
 </script>
 
 <template>
@@ -32,7 +41,7 @@ defineProps<{
                         {{ row.name }}
                     </td>
                     <td class="border border-gray-400 px-2 py-1">
-                        {{ row.belt }}
+                        {{ formatBelt(row.belt) }}
                     </td>
                     <td class="border border-gray-400 px-2 py-1">
                         {{ row.belt_size }}

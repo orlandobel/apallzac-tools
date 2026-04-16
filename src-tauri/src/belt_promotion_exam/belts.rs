@@ -23,7 +23,6 @@ impl FromStr for BELTS {
         let normalized = input.nfd().filter(char::is_ascii).collect::<String>();
         let upper = normalized.to_uppercase();
 
-        println!("Normalized and uppercased input: {}", upper);
         match upper.as_str() {
             "AMARILLO" => Ok(BELTS::AMARILLO),
             "NARANJA" => Ok(BELTS::NARANJA),
@@ -31,10 +30,9 @@ impl FromStr for BELTS {
             "AZUL" => Ok(BELTS::AZUL),
             "VERDE" => Ok(BELTS::VERDE),
             "CAFE" => Ok(BELTS::CAFE),
-            // TODO :: this three cases are temporal, change when get definitives
-            "CAFE1" => Ok(BELTS::CAFE1),
-            "CAFE2" => Ok(BELTS::CAFE2),
-            "CAFE3" => Ok(BELTS::CAFE3),
+            "CAFE 1ER GRADO" => Ok(BELTS::CAFE1),
+            "CAFE 2DO GRADO" => Ok(BELTS::CAFE2),
+            "CAFE 3ER GRADO" => Ok(BELTS::CAFE3),
             _ => {
                 let msg = format!("No se encontro cinturon: {}", input);
                 Err(msg)
