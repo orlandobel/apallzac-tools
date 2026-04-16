@@ -29,11 +29,6 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
           cache: 'bun'
 
       - name: install Rust stable
