@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Candidate from '@/types/Candidate.type';
 
-const props = defineProps<{
+defineProps<{
     headers: string[]
     disabled: boolean
     data: Candidate[]
