@@ -4,6 +4,7 @@ use super::belts::BELTS;
 use super::candidate::Candidate;
 use crate::exam_controller::ExamController;
 use crate::excel_reader::{column_configurations::BeltPromotionConfiguration, workbook::Workbook};
+use log::{error, info};
 
 pub struct BeltPromotionExamController {
     workbook: Workbook,
@@ -17,7 +18,15 @@ impl BeltPromotionExamController {
         let mut workbook = Workbook::new(path.to_string())?;
         let mut sheet = workbook.get_sheet()?;
 
-        let first_row = sheet.next().unwrap()?;
+        let first_row = match sheet.next() {
+            Some(row) => row?,
+            None => {
+                let msg = format!("BeltPromotionExamController@new - No rows found in Excel sheet: {}", path);
+                println!("{}", msg);
+                error!("{}", msg);
+                return Err(msg.into());
+            }
+        };
         let col_config = BeltPromotionConfiguration::new(&first_row)?;
         drop(sheet);
 
@@ -31,7 +40,16 @@ impl BeltPromotionExamController {
 
     pub fn replace_workbook(&mut self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.workbook = Workbook::new(path.to_string())?;
-        self.col_config = BeltPromotionConfiguration::new(&self.workbook.get_sheet()?.next().unwrap()?)?;
+        let first_row = match self.workbook.get_sheet()?.next() {
+            Some(row) => row?,
+            None => {
+                let msg = format!("BeltPromotionExamController@replace_workbook - No rows found in Excel sheet during workbook replacement: {}", path);
+                println!("{}", msg);
+                error!("{}", msg);
+                return Err(msg.into());
+            }
+        };
+        self.col_config = BeltPromotionConfiguration::new(&first_row)?;
         self.candidates.clear();
         Ok(())
     }
@@ -59,8 +77,9 @@ impl BeltPromotionExamController {
         let mut sorted_candidates = candidates.into_iter().collect::<Vec<Candidate>>();
         sorted_candidates.sort_by(|a, b| a.belt.cmp(&b.belt));
 
+        info!("BeltPromotionExamController@generate_exams - Total candidates: {}", sorted_candidates.len());
         handler.emit("total-candidates", sorted_candidates.len())?;
-        for candidate in sorted_candidates.iter() {
+        for (index, candidate) in sorted_candidates.iter().enumerate() {
             let exam = match candidate.belt {
                 BELTS::AMARILLO => "yellow.pdf",
                 BELTS::NARANJA => "orange.pdf",
@@ -74,6 +93,7 @@ impl BeltPromotionExamController {
             };
 
             exam_controller.create_exam_page(&candidate, exam)?;
+            info!("BeltPromotionExamController@generate_exams - Created {} exams", index);
             handler.emit("current-progress", ())?;
         }
 
@@ -124,7 +144,7 @@ mod tests {
         // CARGO_MANIFEST_DIR es: $HOME\apallzac-tools\src-tauri
 
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        println!("CARGO_MANIFEST_DIR: {}", manifest_dir);
+        println!("BeltPromotionExamController@get_exam_as_base64 - CARGO_MANIFEST_DIR: {}", manifest_dir);
 
         let mut full_path = PathBuf::from(manifest_dir);
         full_path.push("..");
@@ -132,11 +152,15 @@ mod tests {
         full_path.push("tests");
         full_path.push(file_name);
 
-        let path_str = full_path
-            .to_str()
-            .expect("No se pudo convertir la ruta a string");
+        let path_str = match full_path.to_str() {
+            Some(s) => s,
+            None => {
+                error!("BeltPromotionExamController@get_exam_as_base64 - No se pudo convertir la ruta a string :: {:?}", full_path);
+                panic!("No se pudo convertir la ruta a string");
+            }
+        };
 
-        println!("Intentando abrir archivo en: {}", path_str);
+        println!("BeltPromotionExamController@get_exam_as_base64 - Intentando abrir archivo en: {}", path_str);
 
         // Verificar que el archivo existe
         assert!(

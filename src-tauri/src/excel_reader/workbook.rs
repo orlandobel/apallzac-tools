@@ -2,6 +2,7 @@ use excelstream::{
     streaming_reader::{RowStructIterator, StreamingReader},
     ExcelReader,
 };
+use log::error;
 
 // TODO :: function to reload file
 #[allow(dead_code)]
@@ -33,12 +34,18 @@ mod tests {
         let path_str = get_file_path("examen ejemplo 1.xlsx");
 
         // Crear el workbook y leer el Excel
-        let workbook = Workbook::new(path_str.clone()).expect("No se pudo crear Workbook");
+        let workbook = match Workbook::new(path_str.clone()) {
+            Ok(w) => w,
+            Err(e) => {
+                error!("No se pudo crear Workbook: {:?}", e);
+                panic!("No se pudo crear Workbook");
+            }
+        };
 
         // Verificar que el workbook se creó correctamente
         assert_eq!(workbook.path, path_str);
 
-        println!("✓ Test exitoso: Workbook creado y Excel leído correctamente");
+        println!("Workbook@test_workbook_creation - Test exitoso: Workbook creado y Excel leído correctamente");
     }
 
     /* This function is intended to get the file path for the test Excel file, is not a test it self */
@@ -47,7 +54,7 @@ mod tests {
         // CARGO_MANIFEST_DIR es: $HOME\apallzac-tools\src-tauri
 
         let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        println!("CARGO_MANIFEST_DIR: {}", manifest_dir);
+        println!("Workbook@get_file_path - CARGO_MANIFEST_DIR: {}", manifest_dir);
 
         let mut full_path = PathBuf::from(manifest_dir);
         full_path.push("..");
@@ -55,11 +62,15 @@ mod tests {
         full_path.push("tests");
         full_path.push(file_name);
 
-        let path_str = full_path
-            .to_str()
-            .expect("No se pudo convertir la ruta a string");
+        let path_str = match full_path.to_str() {
+            Some(s) => s,
+            None => {
+                error!("Workbook@new - No se pudo convertir la ruta a string :: {:?}", full_path);
+                panic!("No se pudo convertir la ruta a string");
+            }
+        };
 
-        println!("Intentando abrir archivo en: {}", path_str);
+        println!("Workbook@get_file_path - Intentando abrir archivo en: {}", path_str);
 
         // Verificar que el archivo existe
         assert!(

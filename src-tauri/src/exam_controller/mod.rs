@@ -1,5 +1,6 @@
 use acroform::{AcroFormDocument, FieldValue};
 use field_render::FieldRender;
+use log::{error, info};
 use lopdf::{
     content::{Content, Operation},
     Document, Object,
@@ -37,6 +38,7 @@ impl ExamController {
         file: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let template_path = format!("{}/{}", self.base_path, file);
+        info!("ExamController@create_exam_page - Template path: {}", template_path);
         let output_path = std::env::temp_dir()
             .join(format!(
                 "exam_output_{}_{}.pdf",
@@ -49,7 +51,16 @@ impl ExamController {
             .to_string_lossy()
             .into_owned();
 
-        let mut template = AcroFormDocument::from_pdf(template_path).expect("error opening file");
+        let mut template = match AcroFormDocument::from_pdf(&template_path) {
+            Ok(t) => t,
+            Err(e) => {
+                let err = format!("ExamController@create_single_exam - error opening template file '{}' :: {:?}", template_path, e);
+                println!("{}", err);
+                error!("{}", err);
+                panic!("error opening file");
+            }
+        };
+        info!("ExamController@create_exam_page - Template loaded successfully");
 
         let mut values: HashMap<String, FieldValue> = HashMap::with_capacity(4);
         values.insert("date".to_string(), FieldValue::Text(self.date.clone()));
@@ -64,22 +75,33 @@ impl ExamController {
         );
 
         template.fill_and_save(values, &output_path).map_err(|e| {
-            println!("Error saving document: {:?}", e.to_string());
+            let err = format!("ExamController@create_single_exam - Error saving document :: {:?}", e.to_string());
+            println!("{}", err);
+            error!("{}", err);
             Box::new(e) as Box<dyn std::error::Error + 'static>
         })?;
 
-        self.flatten_document(&output_path, &candidate.belt)
-            .map_err(|e| {
-                println!("Error flattening document: {:?}", e.to_string());
-                Box::new(e)
-            })
-            .unwrap();
+        info!("ExamController@create_exam_page - Document saved successfully");
+
+        match self.flatten_document(&output_path, &candidate.belt) {
+            Ok(_) => {}
+            Err(e) => {
+                let err = format!("ExamController@create_single_exam - Error flattening document :: {:?}", e.to_string());
+                println!("{}", err);
+                error!("{}", err);
+                panic!("Error flattening document");
+            }
+        }
 
         // Merge with combined exams file
+        info!("ExamController@create_exam_page - Merging documents");
         self.merge_documents(&output_path)?;
+        info!("ExamController@create_exam_page - Documents merged successfully");
 
         // Delete temporary file with better error handling
         let _ = std::fs::remove_file(&output_path); // Ignore cleanup errors
+        info!("ExamController@create_exam_page - Temp file deleted");
+        info!("ExamController@create_exam_page - Exam page created successfully");
         Ok(())
     }
 
@@ -362,7 +384,8 @@ mod exam_controller_test {
 
         let result = controller.create_exam_page(&candidate, "yellow.pdf");
         if let Err(ref e) = result {
-            println!("Error creating single exam page: {:?}", e);
+            let err = format!("ExamController@test_create_single_exam_page - Error creating single exam page :: {:?}", e);
+            println!("{}", err);
         }
         assert!(result.is_ok());
     }
@@ -387,12 +410,16 @@ mod exam_controller_test {
             },
         ];
 
-        controller
-            .create_exam_page(&candidates[0], "yellow.pdf")
-            .unwrap();
-        controller
-            .create_exam_page(&candidates[1], "brown1.pdf")
-            .unwrap();
+        if let Err(e) = controller.create_exam_page(&candidates[0], "yellow.pdf") {
+            let err = format!("ExamController@test_create_exam_page - Error creating exam page :: {:?}", e);
+            println!("{}", err);
+            panic!("Error creating exam page: {:?}", e);
+        }
+        if let Err(e) = controller.create_exam_page(&candidates[1], "brown1.pdf") {
+            let err = format!("ExamController@test_create_exam_page - Error creating exam page :: {:?}", e);
+            println!("{}", err);
+            panic!("Error creating exam page: {:?}", e);
+        }
 
         assert!(true);
     }
@@ -424,15 +451,21 @@ mod exam_controller_test {
             },
         ];
 
-        controller
-            .create_exam_page(&candidates[0], "yellow.pdf")
-            .unwrap();
-        controller
-            .create_exam_page(&candidates[1], "brown1.pdf")
-            .unwrap();
-        controller
-            .create_exam_page(&candidates[2], "green.pdf")
-            .unwrap();
+        if let Err(e) = controller.create_exam_page(&candidates[0], "yellow.pdf") {
+            let err = format!("ExamController@test_create_exam_page - Error creating exam page :: {:?}", e);
+            println!("{}", err);
+            panic!("Error creating exam page: {:?}", e);
+        }
+        if let Err(e) = controller.create_exam_page(&candidates[1], "brown1.pdf") {
+            let err = format!("ExamController@test_create_exam_page - Error creating exam page :: {:?}", e);
+            println!("{}", err);
+            panic!("Error creating exam page: {:?}", e);
+        }
+        if let Err(e) = controller.create_exam_page(&candidates[2], "green.pdf") {
+            let err = format!("ExamController@test_create_exam_page - Error creating exam page :: {:?}", e);
+            println!("{}", err);
+            panic!("Error creating exam page: {:?}", e);
+        }
 
         assert!(true);
     }
@@ -443,12 +476,21 @@ mod exam_controller_test {
         let candidates = generate_candidates(100);
 
         for candidate in candidates {
-            controller
-                .create_exam_page(&candidate, "yellow.pdf")
-                .unwrap();
+            if let Err(e) = controller.create_exam_page(&candidate, "yellow.pdf") {
+                let err = format!("ExamController@test_create_exam_page_with_different_belts - Error creating exam page for candidate '{}' :: {:?}", candidate.name, e);
+                println!("{}", err);
+                panic!("Error creating exam page: {:?}", e);
+            }
         }
 
-        let base64 = controller.get_exams_as_base64().unwrap();
+        let base64 = match controller.get_exams_as_base64() {
+            Ok(b) => b,
+            Err(e) => {
+                let err = format!("ExamController@test_get_exams_as_base64_wiht_hundred_candidates - Error getting exams as base64 :: {:?}", e);
+                println!("{}", err);
+                panic!("Error getting exams as base64: {:?}", e);
+            }
+        };
         assert!(!base64.is_empty());
     }
 

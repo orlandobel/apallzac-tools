@@ -1,3 +1,4 @@
+use log::error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -43,7 +44,12 @@ fn get_printers_windows() -> Result<Vec<PrinterInfo>, String> {
     let output = Command::new("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", ps_script])
         .output()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            let err = e.to_string();
+            println!("PrinterUtils@get_printers_windows - Error :: {}", err);
+            error!("PrinterUtils@get_printers_windows - Error getting printers :: {}", e);
+            err
+        })?;
 
     if !output.status.success() {
         return Err(String::from_utf8_lossy(&output.stderr).to_string());
@@ -82,7 +88,12 @@ fn print_pdf_windows(printer: &str, path: &str) -> Result<(), String> {
     let output = Command::new("powershell")
         .args(["-NoProfile", "-NonInteractive", "-Command", &script])
         .output()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| {
+            let err = e.to_string();
+            println!("PrinterUtils@get_printers_windows - Error :: {}", err);
+            error!("PrinterUtils@print_pdf_windows - Error printing PDF :: {}", e);
+            err
+        })?;
 
     if output.status.success() {
         Ok(())
@@ -96,34 +107,38 @@ fn print_pdf_windows(printer: &str, path: &str) -> Result<(), String> {
 #[cfg(not(windows))]
 fn get_printers_cups() -> Result<Vec<PrinterInfo>, String> {
     use std::process::Command;
-    println!("get_printers_cups");
+    println!("PrinterUtils@get_printers_cups - get_printers_cups");
 
     // Resolve the current default printer name
     let default_name = {
         let out = Command::new("lpstat").args(["-d"]).output().ok();
-        out.and_then(|o| {
+        let name = out.and_then(|o| {
             let s = String::from_utf8_lossy(&o.stdout).to_string();
             // "system default destination: <name>"
             s.trim()
                 .rsplit(": ")
                 .next()
                 .map(|n| n.trim().to_string())
-        })
-        .unwrap_or_default()
+        });
+        if name.is_none() {
+            error!("PrinterUtils@get_printers_cups - Failed to get default printer name from lpstat");
+        }
+        name.unwrap_or_default()
     };
 
-    println!("default_name: {}", default_name);
+    println!("PrinterUtils@get_printers_cups - default_name: {}", default_name);
 
     // List all accepting queues: "<name> accepting requests since ..."
     let output = Command::new("lpstat")
         .args(["-a"])
         .output()
         .map_err(|e| {
-            println!("error: {:?}", e);
+            println!("PrinterUtils@get_printers_cups - error :: {:?}", e);
+            error!("PrinterUtils@get_printers_cups - Failed to execute lpstat :: {}", e);
             e.to_string()
         })?;
 
-    println!("output: {:?}", output);
+    println!("PrinterUtils@get_printers_cups - output :: {:?}", output);
 
     let stdout = String::from_utf8_lossy(&output.stdout);
 
@@ -139,7 +154,7 @@ fn get_printers_cups() -> Result<Vec<PrinterInfo>, String> {
         })
         .collect();
 
-    println!("printers: {:?}", printers);
+    println!("PrinterUtils@get_printers_cups - printers :: {:?}", printers);
 
     Ok(printers)
 }
@@ -165,7 +180,12 @@ fn print_pdf_cups(printer: &str, path: &str) -> Result<(), String> {
             path,
         ])
         .output()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| { 
+            let err = e.to_string();
+            println!("PrinterUtils@get_printers_windows - Error :: {}", err);
+            error!("PrinterUtils@print_pdf_cups - Error printing PDF :: {}", e);
+            err
+        })?;
 
     if output.status.success() {
         Ok(())

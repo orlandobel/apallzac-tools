@@ -73,10 +73,10 @@ const generateExams = () => {
 		.then(_ => {
 			activeTab.value = 'previsualizacion'
 		})
-		.catch(_ => {
+		.catch(e => {
 			error.value = "Error al generar los exámenes, el archivo fue cargado?"
 			show_snack.value = true
-			console.error('Error al generar los exámenes, el archivo fue cargado?')
+			console.error(e)
 		})
 		.then(_ => {
 			generating.value = false

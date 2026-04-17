@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use app_state::AppState;
 use belt_promotion_exam::commands as bpe_commands;
+use log::error;
 
 pub mod app_state;
 pub mod belt_promotion_exam;
@@ -30,5 +31,9 @@ pub fn run() {
             printer_utils::print_pdf_file,
         ])
         .run(tauri::generate_context!())
+        .map_err(|e| {
+            error!("Lib@run - error while running tauri application :: {:?}", e);
+            e
+        })
         .expect("error while running tauri application");
 }
