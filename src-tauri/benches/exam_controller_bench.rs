@@ -2,6 +2,11 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use apallzac_tools_lib::exam_controller::ExamController;
 use apallzac_tools_lib::belt_promotion_exam::{belts::BELTS, candidate::Candidate};
 
+fn get_templates_path() -> String {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    format!("{}/templates", manifest_dir)
+}
+
 fn create_test_candidate(name: &str, belt: BELTS) -> Candidate {
     Candidate {
         school: Some("Test School".to_string()),
@@ -14,10 +19,11 @@ fn create_test_candidate(name: &str, belt: BELTS) -> Candidate {
 
 fn bench_create_single_exam_page(c: &mut Criterion) {
     let candidate = create_test_candidate("John Doe", BELTS::AMARILLO);
+    let templates_path = get_templates_path();
     
     c.bench_function("create_single_exam_page", |b| {
         b.iter(|| {
-            let mut temp_controller = ExamController::new("19/04/2026");
+            let mut temp_controller = ExamController::new("19/04/2026", &templates_path);
             temp_controller.create_exam_page(std::hint::black_box(&candidate), std::hint::black_box("yellow.pdf"))
         })
     });
@@ -31,10 +37,11 @@ fn bench_create_multiple_exam_pages(c: &mut Criterion) {
         create_test_candidate("Candidate 4", BELTS::AZUL),
         create_test_candidate("Candidate 5", BELTS::NARANJA),
     ];
+    let templates_path = get_templates_path();
     
     c.bench_function("create_multiple_exam_pages", |b| {
         b.iter(|| {
-            let mut controller = ExamController::new("19/04/2026");
+            let mut controller = ExamController::new("19/04/2026", &templates_path);
             for (i, candidate) in candidates.iter().enumerate() {
                 let template = match i {
                     0 => "yellow.pdf",
@@ -52,6 +59,7 @@ fn bench_create_multiple_exam_pages(c: &mut Criterion) {
 
 fn bench_large_batch_processing(c: &mut Criterion) {
     let mut group = c.benchmark_group("large_batch_processing");
+    let templates_path = get_templates_path();
     
     for &size in &[10, 25, 50] {
         let candidates: Vec<Candidate> = (0..size)
@@ -60,7 +68,7 @@ fn bench_large_batch_processing(c: &mut Criterion) {
             
         group.bench_with_input(format!("batch_{}", size), &size, |b, _| {
             b.iter(|| {
-                let mut controller = ExamController::new("19/04/2026");
+                let mut controller = ExamController::new("19/04/2026", &templates_path);
                 for candidate in &candidates {
                     controller.create_exam_page(std::hint::black_box(candidate), std::hint::black_box("yellow.pdf")).unwrap();
                 }

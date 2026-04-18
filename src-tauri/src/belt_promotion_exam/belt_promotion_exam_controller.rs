@@ -1,4 +1,4 @@
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 use super::belts::BELTS;
 use super::candidate::Candidate;
@@ -72,7 +72,18 @@ impl BeltPromotionExamController {
         handler: tauri::AppHandle,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let candidates = self.candidates.clone();
-        let mut exam_controller = ExamController::new(date);
+
+        // Resolver ruta de templates: usa resource_dir() en producción o CARGO_MANIFEST_DIR/templates en desarrollo
+        let templates_path = handler
+            .path()
+            .resource_dir()?
+            .join("templates")
+            .join("exams")
+            .to_string_lossy()
+            .into_owned();
+        info!("BeltPromotionExamController@generate_exams - Templates path: {}", templates_path);
+
+        let mut exam_controller = ExamController::new(date, &templates_path);
 
         let mut sorted_candidates = candidates.into_iter().collect::<Vec<Candidate>>();
         sorted_candidates.sort_by(|a, b| a.belt.cmp(&b.belt));

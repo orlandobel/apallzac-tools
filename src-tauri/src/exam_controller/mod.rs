@@ -6,6 +6,7 @@ use lopdf::{
     Document, Object,
 };
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use crate::belt_promotion_exam::{belts::BELTS, candidate::Candidate};
 
@@ -18,9 +19,8 @@ pub struct ExamController {
 }
 
 impl ExamController {
-    pub fn new(date: &str) -> Self {
-        let manifest_dir = env!("CARGO_MANIFEST_DIR");
-        let base_path = format!("{}/templates", manifest_dir);
+    pub fn new(date: &str, templates_path: &str) -> Self {
+        let base_path = templates_path.to_string();
 
         // Create a new empty PDF document for combining exams
         let combined_pdf = Document::with_version("1.4");
@@ -37,7 +37,7 @@ impl ExamController {
         candidate: &Candidate,
         file: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let template_path = format!("{}/{}", self.base_path, file);
+        let template_path = PathBuf::from(&self.base_path).join(file).to_string_lossy().into_owned();
         info!("ExamController@create_exam_page - Template path: {}", template_path);
         let output_path = std::env::temp_dir()
             .join(format!(
@@ -373,7 +373,9 @@ mod exam_controller_test {
 
     #[test]
     fn test_create_exam_page() {
-        let mut controller = ExamController::new("19/04/2026");
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let templates_path = format!("{}/templates", manifest_dir);
+        let mut controller = ExamController::new("19/04/2026", &templates_path);
         let candidate = Candidate {
             school: Some("Some School".to_string()),
             name: "John Doe".to_string(),
@@ -392,7 +394,9 @@ mod exam_controller_test {
 
     #[test]
     fn test_create_exam_two_pages() {
-        let mut controller = ExamController::new("19/04/2026");
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let templates_path = format!("{}/templates/exams", manifest_dir);
+        let mut controller = ExamController::new("19/04/2026", &templates_path);
         let candidates = vec![
             Candidate {
                 school: Some("Some School".to_string()),
@@ -426,7 +430,9 @@ mod exam_controller_test {
 
     #[test]
     fn test_create_exam_three_pages() {
-        let mut controller = ExamController::new("19/04/2026");
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let templates_path = format!("{}/templates/exams", manifest_dir);
+        let mut controller = ExamController::new("19/04/2026", &templates_path);
         let candidates = vec![
             Candidate {
                 school: Some("Some School".to_string()),
@@ -472,7 +478,9 @@ mod exam_controller_test {
 
     #[test]
     fn test_get_exams_as_base64_wiht_hundred_candidates() {
-        let mut controller = ExamController::new("19/04/2026");
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let templates_path = format!("{}/templates/exams", manifest_dir);
+        let mut controller = ExamController::new("19/04/2026", &templates_path);
         let candidates = generate_candidates(100);
 
         for candidate in candidates {
