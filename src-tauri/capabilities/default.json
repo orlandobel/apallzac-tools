@@ -12,7 +12,8 @@
     "fs:default",
     "fs:allow-write-file",
     "fs:allow-temp-write",
-    "fs:allow-remove"
+    "fs:allow-remove",
+    "fs:allow-resource-read"
   ],
   "allow": [
     {
